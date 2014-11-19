@@ -15,5 +15,5 @@ install:
   - mkdir gap-root && mkdir gap-root/pkg && ln -s $(pwd) gap-root/pkg/ferret
 
 script:
-  - /opt/gap/bin/gap.sh -l "$(pwd)/gap-root;" makedoc.g
+  - /opt/gap/bin/gap.sh -l "$(pwd)/gap-root;" tst/testall.g
 
