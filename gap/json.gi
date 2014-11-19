@@ -29,7 +29,7 @@ function(o, s)
       PrintTo(o, "[]");
     fi;
   else
-    PrintTo(o, "\"", s, "\"");
+    PrintTo(o, "\"", JSON_ESCAPE_STRING(s), "\"");
   fi;
 end );
 
@@ -71,12 +71,18 @@ function(obj)
   local str, s;
   str := "";
   s := OutputTextString(str, true);
+  SetPrintFormattingStatus(s, false);
   GapToJsonStream(s, obj);
   return str;
 end );
 
-InstallGlobalFunction(JsonToGap,
+InstallGlobalFunction(JsonStringToGap,
 function(str)
-  return JSON_TO_GAP(str);
+  return JSON_STRING_TO_GAP(str);
+end );
+
+InstallGlobalFunction(JsonStreamToGap,
+function(str)
+  return JSON_STREAM_TO_GAP(str);
 end );
   
