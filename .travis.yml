@@ -1,0 +1,19 @@
+language: cpp
+
+branches:
+  except:
+    - gh-pages
+
+before_install:
+  - sudo add-apt-repository ppa:azumanga/gap -y
+  - sudo apt-get update -y
+  - sudo apt-get install gap-snapshot libgmp3-dev parallel valgrind -y
+
+
+install:
+  - ./configure /opt/gap && make
+  - mkdir gap-root && mkdir gap-root/pkg && ln -s $(pwd) gap-root/pkg/ferret
+
+script:
+  - /opt/gap/bin/gap.sh -l '$(pwd)'/gap-root makedoc.g
+
