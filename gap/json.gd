@@ -5,5 +5,13 @@
 #
 
 #! @Description
-#!   Insert documentation for you function here
-DeclareGlobalFunction( "json_Example" );
+#!   Outputs a GAP object as JSON to a stream
+DeclareOperation("GapToJsonStream", [IsOutputStream, IsObject]);
+
+#! @Description
+#!   Outputs a GAP object as a JSON string
+DeclareGlobalFunction("GapToJsonString");
+
+#! @Description
+#!   Reads a JSON string as GAP
+DeclareGlobalFunction("JsonToGap");

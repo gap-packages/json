@@ -1,10 +1,82 @@
-#
-# json: Reading and Writing JSON
-#
-# Implementations
-#
-InstallGlobalFunction( json_Example,
-function()
-	Print( "This is a placeholder function, replace it with your own code.\n" );
+
+InstallMethod(GapToJsonStream, [IsOutputStream, IsInt],
+function(o, d)
+  PrintTo(o, String(d));
 end );
 
+InstallMethod(GapToJsonStream, [IsOutputStream, IsFloat],
+function(o, d)
+  PrintTo(o, String(d));
+end );
+
+InstallMethod(GapToJsonStream, [IsOutputStream, IsBool],
+function(o, b)
+  if b = true then
+    PrintTo(o, "true");
+  elif b = false then
+    PrintTo(o, "false");
+  else
+    Error("Invalid Boolean");
+  fi;
+end );
+      
+InstallMethod(GapToJsonStream, [IsOutputStream, IsString],
+function(o, s)
+  if IsEmpty(s) then
+    if IsStringRep(s) then
+      PrintTo(o, "\"\"");
+    else
+      PrintTo(o, "[]");
+    fi;
+  else
+    PrintTo(o, "\"", s, "\"");
+  fi;
+end );
+
+InstallMethod(GapToJsonStream, [IsOutputStream, IsList],
+function(o, l)
+  local i, first;
+  first := true;
+  PrintTo(o, "[");
+  for i in l do
+    if first then
+      first := false;
+    else
+      PrintTo(o, ",");
+    fi;
+    GapToJsonStream(o, i);
+  od;
+  PrintTo(o, "]");
+end );
+
+InstallMethod(GapToJsonStream, [IsOutputStream, IsRecord],
+function(o, r)
+  local i, first;
+  first := true;
+  PrintTo(o, "{");
+  for i in RecNames(r) do
+    if first then
+      first := false;
+    else
+      PrintTo(o, ",");
+    fi;
+    GapToJsonStream(o, i);
+    PrintTo(o, " :", r.(i));
+  od;
+  PrintTo(o, "}");
+end );
+
+InstallGlobalFunction(GapToJsonString,
+function(obj)
+  local str, s;
+  str := "";
+  s := OutputTextString(str, true);
+  GapToJsonStream(s, obj);
+  return str;
+end );
+
+InstallGlobalFunction(JsonToGap,
+function(str)
+  return JSON_TO_GAP(str);
+end );
+  
