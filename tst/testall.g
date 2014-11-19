@@ -22,12 +22,20 @@ Sort(tests);
 # Convert tests to filenames
 tests := List(tests, test -> Filename(dirs,test));
 
-# Run the tests
-for test in tests do
-    Print("Running test '",test,"'\n");
+runtest := function(test)
     if Test(test, rec(compareFunction := "uptowhitespace")) then
-        Print("Test '",test,"' succeeded\n");
+        Print("Test '", test, "' succeeded\n");
+        return true;
     else
-        Print("Test '",test,"' failed\n");
+        Print("Test '", test, "' failed\n");
+        return false;
     fi;
-od;
+end;
+
+l := List(tests, runtest);
+
+if ForAny(l, x -> (x=false)) then
+    IO_exit(1);
+else
+    IO_exit(0);
+fi;
