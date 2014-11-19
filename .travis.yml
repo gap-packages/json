@@ -11,7 +11,7 @@ before_install:
 
 
 install:
-  - ./configure /opt/gap && make
+  - ./autogen.sh && ./configure --with-gaproot=/opt/gap && make
   - mkdir gap-root && mkdir gap-root/pkg && ln -s $(pwd) gap-root/pkg/ferret
 
 script:
