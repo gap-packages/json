@@ -1,3 +1,31 @@
+#############################################################################
+##
+##
+#W  json.gi                  json Package                Chris Jefferson
+##
+##  Installation file for functions of the json package.
+##
+#Y  Copyright (C) 2013-2014 University of St. Andrews, North Haugh,
+#Y                          St. Andrews, Fife KY16 9SS, Scotland
+##
+
+####
+# Functions and variables beginning '_JSON_' are only called
+# from C++ by the json package.
+####
+
+
+_JSON_Globals := [];
+
+_JSON_addRef := function(obj)
+  Add(_JSON_Globals, obj);
+end;
+
+_JSON_clearRefs := function()
+  _JSON_Globals := [];
+end;
+
+
 
 InstallMethod(GapToJsonStream, [IsOutputStream, IsInt],
 function(o, d)

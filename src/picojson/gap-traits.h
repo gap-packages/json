@@ -16,7 +16,11 @@ struct gap_val
     
     explicit gap_val(Obj o)
     : obj(o)
-    { }    
+    { // As we are storing an Obj in a C++ object, we need to make sure
+      // it does not get garbage collected
+      if(!IS_INTOBJ(o))
+        callGAPFunction(AddGAPObjToCacheFunction, o);
+    }
     
     bool evaluate_as_boolean() const
     { 

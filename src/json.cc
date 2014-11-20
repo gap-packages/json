@@ -3,16 +3,12 @@
  */
 
 #include "src/compiled.h"          /* GAP headers                */
+#include "gap-functions.h"
 
 #include "picojson/picojson.h"
 #include "picojson/gap-traits.h"
 
 typedef picojson::value_t<gap_type_traits> gmp_value;
-
-Obj TestCommand(Obj self)
-{
-    return INTOBJ_INT(42);
-}
 
 Obj JsonToGap(const gmp_value& v)
 {
@@ -124,13 +120,7 @@ Obj JSON_ESCAPE_STRING(Obj self, Obj param)
     return copy;
 }
 
-static Obj ReadByteFunction;
 
-static Obj callGAPFunction(Obj fun, Obj arg)
-{
-  typedef Obj(*F)(Obj,Obj);
-  return reinterpret_cast<F>(HDLR_FUNC(fun,1))(fun, arg);
-}
 
 // WARNING: This class is only complete enough to work with
 // picojson's iterator support.
@@ -203,8 +193,19 @@ static GapStreamToInputIterator endGapStreamIterator()
   return g;
 }
 
+// making an object of this type will ensure when the scope is exited
+// we clean up any GAP objects we cached
+struct CleanupCacheGuard
+{
+  ~CleanupCacheGuard()
+    { callGAPFunction(ClearGAPCacheFunction); }
+};
+
 Obj JSON_STREAM_TO_GAP(Obj self, Obj stream)
 {
+  JSON_setupGAPFunctions();
+  CleanupCacheGuard ccg;
+  
   typedef picojson::value_t<gap_type_traits> gmp_value;
   
   gmp_value v;
@@ -215,12 +216,15 @@ Obj JSON_STREAM_TO_GAP(Obj self, Obj stream)
     ErrorQuit(err.c_str(), 0, 0);
     return Fail;
   }
-  
+
   return JsonToGap(v);
 }
   
 Obj JSON_STRING_TO_GAP(Obj self, Obj param)
 {
+    JSON_setupGAPFunctions();
+    CleanupCacheGuard ccg;
+
     if(!IS_STRING(param))
     {
         ErrorQuit("Input to JsonToGap must be a string", 0, 0);
@@ -269,7 +273,6 @@ typedef Obj (* GVarFunc)(/*arguments*/);
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
-    GVAR_FUNC_TABLE_ENTRY("json.c", TestCommand, 0, ""),
     GVAR_FUNC_TABLE_ENTRY("json.c", JSON_STRING_TO_GAP, 1, "string"),
     GVAR_FUNC_TABLE_ENTRY("json.c", JSON_ESCAPE_STRING, 1, "string"),
     GVAR_FUNC_TABLE_ENTRY("json.c", JSON_STREAM_TO_GAP, 1, "string"),
@@ -296,8 +299,6 @@ static Int InitLibrary( StructInitInfo *module )
 {
     /* init filters and functions */
     InitGVarFuncsFromTable( GVarFuncs );
-
-    ReadByteFunction = VAL_GVAR(GVarName("ReadByte"));
     
     /* return success                                                      */
     return 0;
