@@ -1,0 +1,55 @@
+  
+  [1X1 [33X[0;0YGAP-JSON mapping[133X[101X
+  
+  [33X[0;0YThis package defines a mapping between the JSON markup language and GAP. The
+  built-in  datatypes  of  GAP  provide an easy mapping to and from JSON. This
+  package uses the following mapping between GAP and JSON.[133X
+  
+  [30X    [33X[0;6YJSON lists are mapped to GAP lists[133X
+  
+  [30X    [33X[0;6YJSON dictionaries are mapped to GAP records[133X
+  
+  [30X    [33X[0;6YJSON strings are mapped to GAP strings[133X
+  
+  [30X    [33X[0;6YIntegers are mapped to GAP integers, non-integer numbers are mapped to
+        Floats[133X
+  
+  [30X    [33X[0;6Ytrue, false and null are mapped to true, false and fail respectively[133X
+  
+  [33X[0;0YNote  that  this  library  is  *NOT*  intended  to provide a general purpose
+  library for transmitting any GAP object. If you wish to do this, look at the
+  openmath package, or IO_Pickle in the IO package.[133X
+  
+  
+  [1X1.1 [33X[0;0YMethods[133X[101X
+  
+  [1X1.1-1 GapToJsonStream[101X
+  
+  [29X[2XGapToJsonStream[102X( [3Xstream[103X, [3Xvalue[103X ) [32X operation
+  
+  [33X[0;0YConverts  the  [3Xvalue[103X  to  JSON,  and  outputs  it  to  [3Xstream[103X.  You must use
+  SetPrintFormattingStatus  to  disable  GAP's extra formatting on your stream
+  before  calling  [3XGapToJsonStream[103X to disable GAP's extra formatting, else you
+  will generate invalid JSON.[133X
+  
+  [1X1.1-2 GapToJsonString[101X
+  
+  [29X[2XGapToJsonString[102X( [3Xvalue[103X ) [32X function
+  [6XReturns:[106X  [33X[0;10Ystring[133X
+  
+  [33X[0;0YConverts a GAP [3Xvalue[103X to a JSON string.[133X
+  
+  [1X1.1-3 JsonStringToGap[101X
+  
+  [29X[2XJsonStringToGap[102X( [3Xstring[103X ) [32X function
+  [6XReturns:[106X  [33X[0;10Yvalue[133X
+  
+  [33X[0;0YConverts a JSON [3Xstring[103X into a GAP value.[133X
+  
+  [1X1.1-4 JsonStreamToGap[101X
+  
+  [29X[2XJsonStreamToGap[102X( [3Xstream[103X ) [32X function
+  [6XReturns:[106X  [33X[0;10Yvalue[133X
+  
+  [33X[0;0YReads a single JSON object from a [3Xstream[103X and converts it to a GAP value.[133X
+  
