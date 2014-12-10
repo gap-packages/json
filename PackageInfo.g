@@ -69,7 +69,13 @@ Dependencies := rec(
 ),
 
 AvailabilityTest := function()
-   return Filename(DirectoriesPackagePrograms("json"), "json.so") <> fail;
+   if Filename(DirectoriesPackagePrograms("json"), "json.so") = fail then
+     LogPackageLoadingMessage( PACKAGE_WARNING,
+             [ "kernel functions for json are not available." ] );
+     return false;
+   else
+     return true;
+   fi;
 end,
 
 TestFile := "tst/testall.g",
