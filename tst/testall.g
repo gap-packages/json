@@ -5,6 +5,8 @@
 # metadata in PackageInfo.g.
 #
 LoadPackage( "json" );
+LoadPackage( "io" );
+
 dirs := DirectoriesPackageLibrary( "json", "tst" );
 
 HasSuffix := function(list, suffix)
