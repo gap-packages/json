@@ -1,6 +1,6 @@
 name: json
-version: 0.8.0
-date: 20/11/2014
+version: 0.8.1
+date: 10/12/2014
 description: Reading and Writing JSON
 
 authors:
@@ -11,7 +11,7 @@ maintainers:
     - name: Christopher Jefferson
       url: http://caj.host.cs.st-andrews.ac.uk/
 
-GAP: ">= 4.6"
+GAP: ">= 4.7.6"
 
 needed-pkgs:
     - name: "GAPDoc"
@@ -24,7 +24,7 @@ packageinfo: http://gap-system.github.io/json/PackageInfo.g
 
 downloads:
     - name: .tar.gz
-      url: https://github.com/gap-system/json/releases/download/v0.8.0/json-0.8.0.tar.gz
+      url: https://github.com/gap-system/json/releases/download/v0.8.1/json-0.8.1.tar.gz
 
 abstract: 
 

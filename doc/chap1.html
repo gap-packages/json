@@ -25,7 +25,7 @@
 <div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap1.html#X8606FDCE878850EF">1.1 <span class="Heading">Methods</span></a>
 </span>
 <div class="ContSSBlock">
-<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7867F7087FAB5F86">1.1-1 GapToJsonStream</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X83B041337FB4E4D1">1.1-1 GapToJsonStream</a></span>
 <span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X855531F88506F3D0">1.1-2 GapToJsonString</a></span>
 <span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X823A762684DC39C1">1.1-3 JsonStringToGap</a></span>
 <span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X823DB24A7D2F7D64">1.1-4 JsonStreamToGap</a></span>
@@ -60,12 +60,12 @@
 
 <h4>1.1 <span class="Heading">Methods</span></h4>
 
-<p><a id="X7867F7087FAB5F86" name="X7867F7087FAB5F86"></a></p>
+<p><a id="X83B041337FB4E4D1" name="X83B041337FB4E4D1"></a></p>
 
 <h5>1.1-1 GapToJsonStream</h5>
 
-<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; GapToJsonStream</code>( <var class="Arg">stream</var>, <var class="Arg">value</var> )</td><td class="tdright">( operation )</td></tr></table></div>
-<p>Converts the <var class="Arg">value</var> to JSON, and outputs it to <var class="Arg">stream</var>. You must use SetPrintFormattingStatus to disable GAP's extra formatting on your stream before calling <var class="Arg">GapToJsonStream</var> to disable GAP's extra formatting, else you will generate invalid JSON.</p>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; GapToJsonStream</code>( <var class="Arg">stream</var>, <var class="Arg">value</var> )</td><td class="tdright">( function )</td></tr></table></div>
+<p>Converts the <var class="Arg">value</var> to JSON, and outputs it to <var class="Arg">stream</var>. This function disables GAP's usual line splitting while JSON is being outputted.</p>
 
 <p><a id="X855531F88506F3D0" name="X855531F88506F3D0"></a></p>
 

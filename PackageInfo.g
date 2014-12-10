@@ -10,8 +10,8 @@ SetPackageInfo( rec(
 
 PackageName := "json",
 Subtitle := "Reading and Writing JSON",
-Version := "0.8.0",
-Date := "20/11/2014", # dd/mm/yyyy format
+Version := "0.8.1",
+Date := "10/12/2014", # dd/mm/yyyy format
 
 Persons := [
   rec(
@@ -62,15 +62,21 @@ PackageDoc := rec(
 ),
 
 Dependencies := rec(
-  GAP := ">= 4.6",
+  GAP := ">= 4.7.6",
   NeededOtherPackages := [ [ "GAPDoc", ">= 1.5" ] ],
   SuggestedOtherPackages := [ ],
   ExternalConditions := [ ],
 ),
 
 AvailabilityTest := function()
-        return true;
-    end,
+   if Filename(DirectoriesPackagePrograms("json"), "json.so") = fail then
+     LogPackageLoadingMessage( PACKAGE_WARNING,
+             [ "kernel functions for json are not available." ] );
+     return false;
+   else
+     return true;
+   fi;
+end,
 
 TestFile := "tst/testall.g",
 

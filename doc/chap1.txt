@@ -25,12 +25,10 @@
   
   [1X1.1-1 GapToJsonStream[101X
   
-  [29X[2XGapToJsonStream[102X( [3Xstream[103X, [3Xvalue[103X ) [32X operation
+  [29X[2XGapToJsonStream[102X( [3Xstream[103X, [3Xvalue[103X ) [32X function
   
-  [33X[0;0YConverts  the  [3Xvalue[103X  to  JSON,  and  outputs  it  to  [3Xstream[103X.  You must use
-  SetPrintFormattingStatus  to  disable  GAP's extra formatting on your stream
-  before  calling  [3XGapToJsonStream[103X to disable GAP's extra formatting, else you
-  will generate invalid JSON.[133X
+  [33X[0;0YConverts the [3Xvalue[103X to JSON, and outputs it to [3Xstream[103X. This function disables
+  GAP's usual line splitting while JSON is being outputted.[133X
   
   [1X1.1-2 GapToJsonString[101X
   
