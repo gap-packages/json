@@ -8,11 +8,10 @@ gap> test_cycle := function(i)
 > fi;
 > jsonstream := "";
 > s := OutputTextString(jsonstream, true);
-> SetPrintFormattingStatus(s, false);
 > GapToJsonStream(s, i);
 > CloseStream(s);
 > if jsonstr <> jsonstream then
->   Print("Failed str/stream match: ", i, " to ", jsonstr, " and ", jsonstream, "\n");
+>   Print("Failed str/stream match: \n", i, "to \n", jsonstr, " and \n", jsonstream, "\n");
 > fi;
 > s := InputTextString(jsonstream);
 > streamres := JsonStreamToGap(s);
@@ -37,6 +36,9 @@ gap> test_cycle(",abc,");
 gap> test_cycle("\000");
 gap> test_cycle("\n");
 gap> test_cycle("\r");
+gap> for i in [0..255] do
+> test_cycle(List([0..100],x->CharInt(i)));
+> od;
 gap> test_cycle(List([0..255], CharInt));
 gap> test_cycle(rec());
 gap> test_cycle(rec(a := 1));

@@ -17,10 +17,11 @@
 #! @Arguments stream value
 #! @Description
 #! Converts the <A>value</A> to JSON, and outputs it to <A>stream</A>.
-#! You must use SetPrintFormattingStatus to disable GAP's extra
-#! formatting on your stream before calling <A>GapToJsonStream</A>
-#! to disable GAP's extra formatting, else you will generate invalid JSON.
-DeclareOperation("GapToJsonStream", [IsOutputStream, IsObject]);
+#! This function disables GAP's usual line splitting while JSON is
+#! being outputted.
+DeclareGlobalFunction("GapToJsonStream");
+
+DeclareOperation("_GapToJsonStreamInternal", [IsOutputStream, IsObject]);
 
 #! @Arguments value
 #! @Returns string

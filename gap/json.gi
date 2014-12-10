@@ -27,17 +27,17 @@ end;
 
 
 
-InstallMethod(GapToJsonStream, [IsOutputStream, IsInt],
+InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsInt],
 function(o, d)
   PrintTo(o, String(d));
 end );
 
-InstallMethod(GapToJsonStream, [IsOutputStream, IsFloat],
+InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsFloat],
 function(o, d)
   PrintTo(o, String(d));
 end );
 
-InstallMethod(GapToJsonStream, [IsOutputStream, IsBool],
+InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsBool],
 function(o, b)
   if b = true then
     PrintTo(o, "true");
@@ -48,7 +48,7 @@ function(o, b)
   fi;
 end );
       
-InstallMethod(GapToJsonStream, [IsOutputStream, IsString],
+InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsString],
 function(o, s)
   if IsEmpty(s) then
     if IsStringRep(s) then
@@ -61,7 +61,7 @@ function(o, s)
   fi;
 end );
 
-InstallMethod(GapToJsonStream, [IsOutputStream, IsList],
+InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsList],
 function(o, l)
   local i, first;
   first := true;
@@ -72,12 +72,12 @@ function(o, l)
     else
       PrintTo(o, ",");
     fi;
-    GapToJsonStream(o, i);
+    _GapToJsonStreamInternal(o, i);
   od;
   PrintTo(o, "]");
 end );
 
-InstallMethod(GapToJsonStream, [IsOutputStream, IsRecord],
+InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsRecord],
 function(o, r)
   local i, first;
   first := true;
@@ -88,11 +88,21 @@ function(o, r)
     else
       PrintTo(o, ",");
     fi;
-    GapToJsonStream(o, i);
+    _GapToJsonStreamInternal(o, i);
     PrintTo(o, " :", r.(i));
   od;
   PrintTo(o, "}");
 end );
+
+InstallGlobalFunction(GapToJsonStream,
+function(stream, obj)
+  local streamformat;
+  streamformat := PrintFormattingStatus(stream);
+  SetPrintFormattingStatus(stream, false);
+  _GapToJsonStreamInternal(stream, obj);
+  SetPrintFormattingStatus(stream, streamformat);
+end );
+
 
 InstallGlobalFunction(GapToJsonString,
 function(obj)
