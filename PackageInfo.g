@@ -69,8 +69,8 @@ Dependencies := rec(
 ),
 
 AvailabilityTest := function()
-        return true;
-    end,
+   return Filename(DirectoriesPackagePrograms("json"), "json.so") <> fail;
+end,
 
 TestFile := "tst/testall.g",
 
