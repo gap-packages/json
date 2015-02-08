@@ -1,6 +1,6 @@
 name: json
-version: 0.8.1
-date: 10/12/2014
+version: 0.8.2
+date: 08/02/2015
 description: Reading and Writing JSON
 
 authors:
@@ -24,7 +24,7 @@ packageinfo: http://gap-system.github.io/json/PackageInfo.g
 
 downloads:
     - name: .tar.gz
-      url: https://github.com/gap-system/json/releases/download/v0.8.1/json-0.8.1.tar.gz
+      url: https://github.com/gap-system/json/releases/download/v0.8.2/json-0.8.2.tar.gz
 
 abstract: 
 
