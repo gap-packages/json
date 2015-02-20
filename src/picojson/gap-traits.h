@@ -1,9 +1,6 @@
 #include <string>
 #include <algorithm>
 #include <math.h>
-#include <stdio.h>
-#include <gmpxx.h>
-#include <sstream>
 
 
 struct gap_val
