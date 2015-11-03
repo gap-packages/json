@@ -12,5 +12,5 @@ This package uses the following mapping between GAP and JSON.
 * true, false and null are mapped to true, false and fail respectively
 
 Note that this library will not map any other GAP types, such as groups,
-permutatations, to or from JSON. If you wish to map between more complex
+permutations, to or from JSON. If you wish to map between more complex
 types, look at the openmath package, or IO_Pickle in the IO package.
