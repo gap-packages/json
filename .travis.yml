@@ -1,19 +1,27 @@
 language: cpp
+sudo: false
 
 branches:
   except:
     - gh-pages
 
-before_install:
-  - sudo add-apt-repository ppa:azumanga/gap -y
-  - sudo apt-get update -y
-  - sudo apt-get install gap-snapshot libgmp3-dev parallel valgrind -y
-
+addons:
+  apt_packages:
+      - libgmp3-dev
 
 install:
-  - ./autogen.sh && ./configure --with-gaproot=/opt/gap && make
-  - mkdir gap-root && mkdir gap-root/pkg && ln -s $(pwd) gap-root/pkg/ferret
+  - git clone --depth=2 https://github.com/gap-system/gap.git gapsrc
+  - pwd
+  - ( cd gapsrc && ./configure --with-gmp=system && make && make bootstrap-pkg-minimal)
+  - pwd
+  - ( ./autogen.sh && ./configure --with-gaproot=gapsrc && make )
+  - pwd
+  - ls
+  - ls gapsrc
+  - ls gapsrc/pkg
+  - echo ln -s $(pwd) gapsrc/pkg/json
+  - ln -s $(pwd) gapsrc/pkg/json
 
 script:
-  - /opt/gap/bin/gap.sh -l "$(pwd)/gap-root;" tst/testall.g
-
+  - gapsrc/bin/gap.sh tst/testall.g
+  

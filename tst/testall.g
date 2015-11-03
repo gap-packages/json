@@ -5,39 +5,8 @@
 # metadata in PackageInfo.g.
 #
 LoadPackage( "json" );
-LoadPackage( "io" );
 
-dirs := DirectoriesPackageLibrary( "json", "tst" );
+TestDirectory(DirectoriesPackageLibrary( "json", "tst" ),
+  rec(exitGAP := true));
 
-HasSuffix := function(list, suffix)
-  local len;
-  len := Length(list);
-  if Length(list) < Length(suffix) then return false; fi;
-  return list{[len-Length(suffix)+1..len]} = suffix;
-end;
-
-# Load all tests in that directory
-tests := DirectoryContents(dirs[1]);
-tests := Filtered(tests, name -> HasSuffix(name, ".tst"));
-Sort(tests);
-
-# Convert tests to filenames
-tests := List(tests, test -> Filename(dirs,test));
-
-runtest := function(test)
-    if Test(test, rec(compareFunction := "uptowhitespace")) then
-        Print("Test '", test, "' succeeded\n");
-        return true;
-    else
-        Print("Test '", test, "' failed\n");
-        return false;
-    fi;
-end;
-
-l := List(tests, runtest);
-
-if ForAny(l, x -> (x=false)) then
-    IO_exit(1);
-else
-    IO_exit(0);
-fi;
+FORCE_QUIT_GAP(1);
