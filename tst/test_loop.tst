@@ -43,3 +43,5 @@ gap> test_cycle(List([0..255], CharInt));
 gap> test_cycle(rec());
 gap> test_cycle(rec(a := 1));
 gap> test_cycle(rec(a := [1,2], b := [3,4]));
+gap> test_cycle(rec(a := "4,5,6"));
+gap> test_cycle(rec(a := rec(b := rec(c := "4,5,6"))));

@@ -25,8 +25,6 @@ _JSON_clearRefs := function()
   _JSON_Globals := [];
 end;
 
-
-
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsInt],
 function(o, d)
   PrintTo(o, String(d));
@@ -47,7 +45,7 @@ function(o, b)
     Error("Invalid Boolean");
   fi;
 end );
-      
+
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsString],
 function(o, s)
   if IsEmpty(s) then
@@ -89,7 +87,8 @@ function(o, r)
       PrintTo(o, ",");
     fi;
     _GapToJsonStreamInternal(o, i);
-    PrintTo(o, " :", r.(i));
+    PrintTo(o, " : ");
+    _GapToJsonStreamInternal(o, r.(i));
   od;
   PrintTo(o, "}");
 end );
@@ -123,4 +122,3 @@ InstallGlobalFunction(JsonStreamToGap,
 function(str)
   return JSON_STREAM_TO_GAP(str);
 end );
-  
