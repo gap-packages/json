@@ -1,6 +1,6 @@
 name: json
-version: 1.0.0
-date: 03/11/2015
+version: 1.0.1
+date: 15/02/2016
 description: Reading and Writing JSON
 
 authors:
@@ -24,7 +24,7 @@ packageinfo: http://gap-packages.github.io/json/PackageInfo.g
 
 downloads:
     - name: .tar.gz
-      url: https://github.com/gap-packages/json/releases/download/v1.0.0/json-1.0.0.tar.gz
+      url: https://github.com/gap-packages/json/releases/download/v1.0.1/json-1.0.1.tar.gz
 
 abstract: 
 
