@@ -50,6 +50,12 @@ ArchiveFormats := ".tar.gz",
 ##
 Status := "deposited",
 
+SourceRepository := rec( 
+  Type := "git", 
+  URL := "https://github.com/gap-packages/json"
+),
+IssueTrackerURL := Concatenation( ~.SourceRepository.URL, "/issues" ),
+
 AbstractHTML   :=  "",
 
 PackageDoc := rec(
