@@ -42,6 +42,14 @@ struct gap_val
             neg = true;
             begin++;
         }
+        else if(*begin == '+')
+        {
+            begin++;
+        }
+        if(begin == end)
+        {
+          return Fail;
+        }
         Obj res = INTOBJ_INT(0);
         for(; begin != end; ++begin)
         {
@@ -72,7 +80,7 @@ struct gap_val
                 if(loc == std::string::npos)
                 {
                     Obj o = to_gap_int(s.c_str(), s.c_str() + s.size());
-                    return std::make_pair(new gap_val(o), true);
+                    return std::make_pair(new gap_val(o), o != Fail);
                 }
                 
                 if(s[loc+1] == '-')
@@ -82,8 +90,11 @@ struct gap_val
                 }
                 
                 Obj arg1 = to_gap_int(s.c_str(), s.c_str() + loc);
+               
                 Obj arg2 = to_gap_int(s.c_str() + loc + 1, s.c_str() + s.size());
-
+                if(arg1 == Fail || arg2 == Fail) {
+                  return std::make_pair(new gap_val(), false);
+                }
                 Obj retval = ProdInt(arg1, PowInt(INTOBJ_INT(10), arg2));
                 return std::make_pair(new gap_val(retval), true);
             }

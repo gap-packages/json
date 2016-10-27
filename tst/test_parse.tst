@@ -16,6 +16,16 @@ gap> test_parse("1e5",100000);
 gap> test_parse("1.0e5",100000.);
 gap> test_parse("1.0e-5",1.e-05);
 gap> test_parse("1e-5",1.e-05);
+gap> test_parse("0e0", 0);
+gap> test_parse("0e+0", 0);
+gap> test_parse("0e-0", 0.);
+gap> test_parse("0e+1", 0);
+gap> test_parse("0e-1", 0.);
+gap> test_parse("1e+1", 10);
+gap> test_parse("1e1", 10);
+gap> test_parse("1e-1", .1);
+gap> test_parse("1e+0", 1);
+gap> test_parse("1e-0", 1.);
 gap> test_parse("true",true);
 gap> test_parse("false",false);
 gap> test_parse("null",fail);
@@ -39,3 +49,9 @@ gap> JsonStringToGap("e1");
 Error, syntax error at line 1 near: e1
 gap> JsonStringToGap("e");
 Error, syntax error at line 1 near: e
+gap> JsonStringToGap("[-]");
+Error, syntax error at line 1 near: ]
+gap> JsonStringToGap("[1e]");
+Error, syntax error at line 1 near: ]
+gap> JsonStringToGap("[1e+]");
+Error, syntax error at line 1 near: ]
