@@ -211,7 +211,8 @@ Obj JSON_STREAM_TO_GAP(Obj self, Obj stream)
   gmp_value v;
   
   std::string err;
-  picojson::parse(v, GapStreamToInputIterator(stream), endGapStreamIterator(), &err);
+  bool ungotc_check = false;
+  picojson::parse(v, GapStreamToInputIterator(stream), endGapStreamIterator(), &err, &ungotc_check);
   if (! err.empty()) {
     ErrorQuit(err.c_str(), 0, 0);
     return Fail;
@@ -245,12 +246,19 @@ Obj JSON_STRING_TO_GAP(Obj self, Obj param)
     gmp_value v;
     
     std::string err;
-    Char* res = picojson::parse(v, ptr, ptrend, &err);
+    bool ungotc_check = false;
+    Char* res = picojson::parse(v, ptr, ptrend, &err, &ungotc_check);
     if (! err.empty()) {
       ErrorQuit(err.c_str(), 0, 0);
       return Fail;
     }
-    
+
+    // Woo, this is horrible. The parser steps one character too far
+    // if the only thing parsed is a number. So step back.
+    if(ungotc_check) {
+      res--;
+    }
+
     for(; res != ptrend; res++)
     {
       if(!(isspace(*res)) && *res)

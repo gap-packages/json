@@ -623,6 +623,9 @@ namespace picojson {
     bool ungot_;
     int line_;
   public:
+    bool check_ungot() const
+    { return ungot_; }
+
     input(const Iter& first, const Iter& last) : cur_(first), end_(last), last_ch_(-1), ungot_(false), line_(1) {}
     int getc() {
       if (ungot_) {
@@ -1002,7 +1005,7 @@ namespace picojson {
     return err;
   }
   
-  template <typename Context, typename Iter> inline Iter _parse(Context& ctx, const Iter& first, const Iter& last, std::string* err) {
+  template <typename Context, typename Iter> inline Iter _parse(Context& ctx, const Iter& first, const Iter& last, std::string* err, bool* ungotc_check) {
     input<Iter> in(first, last);
     if (! _parse(ctx, in) && err != NULL) {
       char buf[64];
@@ -1017,12 +1020,17 @@ namespace picojson {
 	}
       }
     }
+
+    if(in.check_ungot())
+      {
+        *ungotc_check = true;
+      }
     return in.cur();
   }
   
-  template <typename Iter, typename TraitsT> inline Iter parse(value_t<TraitsT>& out, const Iter& first, const Iter& last, std::string* err) {
+  template <typename Iter, typename TraitsT> inline Iter parse(value_t<TraitsT>& out, const Iter& first, const Iter& last, std::string* err, bool* ungotc_check) {
     default_parse_context_t<TraitsT> ctx(&out);
-    return _parse(ctx, first, last, err);
+    return _parse(ctx, first, last, err, ungotc_check);
   }
   
   template <typename TraitsT>

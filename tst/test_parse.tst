@@ -55,3 +55,9 @@ gap> JsonStringToGap("[1e]");
 Error, syntax error at line 1 near: ]
 gap> JsonStringToGap("[1e+]");
 Error, syntax error at line 1 near: ]
+gap> JsonStringToGap("2x");
+Error, Failed to parse end of string: 'x'
+gap> JsonStringToGap("[1,2]x");
+Error, Failed to parse end of string: 'x'
+gap> JsonStringToGap("{}x");
+Error, Failed to parse end of string: 'x'
