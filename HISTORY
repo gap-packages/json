@@ -1,0 +1,5 @@
+
+1.2.0 : Fix compiling in recent versions of XCode on Mac OS X
+1.1.0 : Fix bug in handling badly formatted integers
+1.0.1 : Fix bug in nested structures
+1.0.0 : First release
