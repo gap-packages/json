@@ -32,6 +32,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
+#include <cfloat>
 #include <iostream>
 #include <iterator>
 #include <limits>
