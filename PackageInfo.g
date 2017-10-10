@@ -10,8 +10,8 @@ SetPackageInfo( rec(
 
 PackageName := "json",
 Subtitle := "Reading and Writing JSON",
-Version := "1.1.0",
-Date := "01/11/2016", # dd/mm/yyyy format
+Version := "1.2.0",
+Date := "10/10/2017", # dd/mm/yyyy format
 
 Persons := [
   rec(
@@ -30,7 +30,7 @@ Persons := [
   ),
 ],
 
-PackageWWWHome := "http://gap-packages.github.io/json/",
+PackageWWWHome := "https://gap-packages.github.io/json/",
 
 ArchiveURL     := Concatenation("https://github.com/gap-packages/json/",
                                 "releases/download/v", ~.Version,
