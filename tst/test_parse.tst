@@ -38,6 +38,8 @@ gap> test_parse("[[[]]]",[[[]]]);
 gap> test_parse("[1,[2,[3]]]",[ 1, [ 2, [ 3 ] ] ]);
 gap> test_parse("{}",rec(  ));
 gap> test_parse("{ \"a\": 1}",rec( a := 1 ));
+gap> test_parse("{ \"a\" : 1}",rec( a := 1 ));
+gap> test_parse("{\"a\": 1}",rec( a := 1 ));
 gap> test_parse("{ \"a\": [1,2,3]}",rec( a := [ 1, 2, 3 ] ));
 gap> JsonStringToGap(" 1 2 3");
 Error, Failed to parse end of string: '2 3'
