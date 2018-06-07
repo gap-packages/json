@@ -1,27 +1,37 @@
 language: cpp
 sudo: false
 
+env:
+  global:
+    - GAPROOT=gaproot
+    - COVDIR=coverage
+
 branches:
   except:
     - gh-pages
 
-addons:
-  apt_packages:
-      - libgmp3-dev
+matrix:
+  include:
+    - env: GAPBRANCH="stable-4.9"
+    - env: CC=clang CXX=clang++
+      compiler: clang
+    - env:
+      compiler: gcc
+    - env: GAP_CONFIGFLAGS="--enable-checking"
+      compiler: gcc
+    - env: ABI=32
+      addons:
+        apt_packages:
+          - libgmp-dev:i386
+          - libreadline-dev:i386
+          - gcc-multilib
+          - g++-multilib
 
-install:
-  - git clone --depth=2 https://github.com/gap-system/gap.git gapsrc
-  - pwd
-  - ( cd gapsrc && ./autogen.sh && ./configure --with-gmp=system && make && make bootstrap-pkg-minimal)
-  - pwd
-  - ( ./autogen.sh && ./configure --with-gaproot=gapsrc && make )
-  - pwd
-  - ls
-  - ls gapsrc
-  - ls gapsrc/pkg
-  - echo ln -s $(pwd) gapsrc/pkg/json
-  - ln -s $(pwd) gapsrc/pkg/json
-
+before_script:
+  - export GAPROOT="$HOME/gap"
+  - scripts/build_gap.sh
 script:
-  - gapsrc/bin/gap.sh tst/testall.g
-  
+  - scripts/build_pkg.sh && scripts/run_tests.sh
+after_script:
+  - bash scripts/gather-coverage.sh
+  - bash <(curl -s https://codecov.io/bash)
