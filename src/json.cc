@@ -54,41 +54,142 @@ Obj JsonToGap(const gmp_value& v)
 // Add function prototype missing from string.h
 extern Obj CopyToStringRep(Obj string);
 
+static Int numberOfBytes(UInt c)
+{
+    if (c < 128)
+        return 1;
+    if (c < 224)
+        return 2;
+    if (c < 240)
+        return 3;
+    return 4;
+}
 
-Obj JSON_ESCAPE_STRING(Obj self, Obj param)
+static Int getChar(Obj list, Int pos)
+{
+    Obj c = ELM_LIST(list, pos);
+    if (c == NULL)
+        return 0;
+    else
+        return *((UChar *)ADDR_OBJ(c));
+}
+
+static Int getUTF8Char(Obj list, Int * basepos)
+{
+    Int  pos = *basepos;
+    UInt val = getChar(list, pos);
+    UInt singlebyte_val = val;
+    Int  len = numberOfBytes(val);
+    pos++;
+
+    if (len == 1) {
+        *basepos = pos;
+        return val;
+    }
+
+    switch (len) {
+    case 2:
+        val = val & 0x3F;
+        if (val & 0x20)
+            goto invalid;
+        break;
+    case 3:
+        val = val & 0x1F;
+        if (val & 0x10)
+            goto invalid;
+        break;
+    case 4:
+        val = val & 0x0F;
+        if (val & 0x08)
+            goto invalid;
+        break;
+    default:
+        abort();
+    }
+    val = val & 0x3F;
+
+    for (Int i = 1; i < len; ++i) {
+        UInt c = getChar(list, pos);
+        if ((c & 0xC0) != 0x80)
+            goto invalid;
+        val = (val << 6) | (c & 0x3F);
+        pos++;
+    }
+
+    // Too high
+    if (val > 0x10ffff)
+        goto invalid;
+
+    // UTF-16 Surrogate pair
+    if (val >= 0xd800 && val <= 0xdfff)
+        goto invalid;
+
+    *basepos = pos;
+    return val;
+
+
+// Hope this is Latin-1
+invalid:
+    *basepos = *basepos + 1;
+    return singlebyte_val;
+}
+
+UChar * outputUnicodeChar(UChar * s, UInt val)
+{
+    if (val <= 0x7f)
+        *(s++) = val;
+    else if (val <= 0x7ff) {
+        *(s++) = (0xc0 | ((val >> 6) & 0x1f));
+        *(s++) = (0x80 | (val & 0x3f));
+    }
+    else if (val <= 0xffff) {
+        *(s++) = (0xe0 | ((val >> 12) & 0x0f));
+        *(s++) = (0x80 | ((val >> 6) & 0x3f));
+        *(s++) = (0x80 | (val & 0x3f));
+    }
+    else {
+        *(s++) = (0xf0 | ((val >> 18) & 0x07));
+        *(s++) = (0x80 | ((val >> 12) & 0x3f));
+        *(s++) = (0x80 | ((val >> 6) & 0x3f));
+        *(s++) = (0x80 | (val & 0x3f));
+    }
+    return s;
+}
+
+Obj JSON_ESCAPE_STRING(Obj self, Obj param, Obj sloppy)
 {
     if(!IS_STRING(param))
     {
         ErrorQuit("Input to JsonEscapeString must be a string", 0, 0);
     }
- 
-    Int escapeCount = 0;
+
+    Int needEscaping = 0;
     Int lenString = LEN_LIST(param);
-    for(int i = 1; i <= lenString; ++i)
-    {
+    for (Int i = 1; i <= lenString && needEscaping == 0; ++i) {
         Obj gapchar = ELMW_LIST(param, i);
         UChar u = *((UChar*)ADDR_OBJ(gapchar));
         switch(u)
         {
             case '\\': case '"': case '/': case '\b':
             case '\t': case '\n': case '\f': case '\r':
-                escapeCount++;
+                needEscaping = 1;
                 break;
             default:
-                if(u < ' ')
-                    escapeCount+=5;
+                if (u < ' ' || u >= 128)
+                    needEscaping = 1;
         }
     }
-    
-    if(escapeCount == 0)
+
+    if (needEscaping == 0)
         return param;
-    
-    Obj copy = NEW_STRING(lenString + escapeCount);
-    UChar* out = CHARS_STRING(copy);
-    for(int i = 1; i <= lenString; ++i)
-    {
-        Obj gapchar = ELMW_LIST(param, i);
-        UChar u = *((UChar*)ADDR_OBJ(gapchar));
+
+    // Massively over-long string
+    Obj     copy = NEW_STRING(lenString * 6);
+    UChar * base = CHARS_STRING(copy);
+    UChar * out = base;
+    Int     i = 1;
+    while (i <= lenString) {
+        Int u = getUTF8Char(param, &i);
         switch(u)
         {
             case '\\': case '"': case '/':
@@ -111,12 +212,15 @@ Obj JSON_ESCAPE_STRING(Obj self, Obj param)
                 }
                 else
                 {
-                    out[0] = u;
-                    out++;
+                    out = outputUnicodeChar(out, u);
                 }
         }
     }
+
     *out = '\0';
+    out++;
+    SET_LEN_STRING(copy, out - base);
+    ResizeBag(copy, SIZEBAG_STRINGLEN(out - base));
     return copy;
 }
 

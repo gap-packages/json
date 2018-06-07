@@ -36,10 +36,9 @@ gap> test_cycle(",abc,");
 gap> test_cycle("\000");
 gap> test_cycle("\n");
 gap> test_cycle("\r");
-gap> for i in [0..255] do
+gap> for i in [0..127] do
 > test_cycle(List([0..100],x->CharInt(i)));
 > od;
-gap> test_cycle(List([0..255], CharInt));
 gap> test_cycle(rec());
 gap> test_cycle(rec(a := 1));
 gap> test_cycle(rec(a := [1,2], b := [3,4]));
