@@ -134,7 +134,7 @@ invalid:
     return singlebyte_val;
 }
 
-UChar * outputUnicodeChar(UChar * s, UInt val)
+static UChar * outputUnicodeChar(UChar * s, UInt val)
 {
     if (val <= 0x7f)
         *(s++) = val;
