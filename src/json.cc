@@ -156,7 +156,7 @@ UChar * outputUnicodeChar(UChar * s, UInt val)
     return s;
 }
 
-Obj JSON_ESCAPE_STRING(Obj self, Obj param, Obj sloppy)
+Obj JSON_ESCAPE_STRING(Obj self, Obj param)
 {
     if(!IS_STRING(param))
     {
