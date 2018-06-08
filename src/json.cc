@@ -217,8 +217,6 @@ Obj JSON_ESCAPE_STRING(Obj self, Obj param)
         }
     }
 
-    *out = '\0';
-    out++;
     SET_LEN_STRING(copy, out - base);
     ResizeBag(copy, SIZEBAG_STRINGLEN(out - base));
     return copy;
