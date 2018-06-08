@@ -13,8 +13,9 @@ branches:
 matrix:
   include:
     - env: GAPBRANCH="stable-4.9"
-    - env: CC=clang CXX=clang++
-      compiler: clang
+#    Clang linking broken with libtool/ubuntu 14.04
+#    - env: CC=clang CXX=clang++
+#      compiler: clang
     - env:
       compiler: gcc
     - env: GAP_CONFIGFLAGS="--enable-checking"
