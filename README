@@ -14,3 +14,15 @@ This package uses the following mapping between GAP and JSON.
 Note that this library will not map any other GAP types, such as groups,
 permutations, to or from JSON. If you wish to map between more complex
 types, look at the openmath package, or IO_Pickle in the IO package.
+
+
+Updates
+=======
+
+
+v2.0.0
+======
+
+The Json package now ensures it only outputs valid UTF8. GAP strings which
+contain valid UTF8 are outputted unmodified, invalid UTF8 is treated as Latin-1,
+and transformed into valid UTF8.

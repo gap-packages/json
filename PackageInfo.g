@@ -10,8 +10,8 @@ SetPackageInfo( rec(
 
 PackageName := "json",
 Subtitle := "Reading and Writing JSON",
-Version := "1.2.0",
-Date := "10/10/2017", # dd/mm/yyyy format
+Version := "2.0.0",
+Date := "08/06/2018", # dd/mm/yyyy format
 
 Persons := [
   rec(

@@ -1,6 +1,6 @@
 name: json
-version: 1.2.0
-date: 2017-10-10
+version: 2.0.0
+date: 2018-06-08
 description: |
     Reading and Writing JSON
 
@@ -25,7 +25,7 @@ packageinfo: https://gap-packages.github.io/json/PackageInfo.g
 
 downloads:
     - name: .tar.gz
-      url: https://github.com/gap-packages/json/releases/download/v1.2.0/json-1.2.0.tar.gz
+      url: https://github.com/gap-packages/json/releases/download/v2.0.0/json-2.0.0.tar.gz
 
 abstract: |
 
