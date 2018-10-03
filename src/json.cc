@@ -25,7 +25,8 @@ Obj JsonToGap(const gmp_value& v)
         Obj str;
         const Char* c_str = v.get<std::string>().c_str();
         Int len = v.get<std::string>().size();
-        C_NEW_STRING(str, len, c_str);
+        str = NEW_STRING(len);
+        memcpy(CHARS_STRING(str), c_str, len);
         return str;
     } else if (v.is<gmp_value::array>()) {
         const gmp_value::array& a = v.get<gmp_value::array>();
