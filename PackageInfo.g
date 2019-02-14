@@ -12,6 +12,7 @@ PackageName := "json",
 Subtitle := "Reading and Writing JSON",
 Version := "2.0.0",
 Date := "08/06/2018", # dd/mm/yyyy format
+License := "BSD-2-Clause",
 
 Persons := [
   rec(
