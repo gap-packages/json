@@ -3,6 +3,7 @@
  */
 
 #include "src/compiled.h"          /* GAP headers                */
+
 #include "gap-functions.h"
 
 #include "picojson/picojson.h"
@@ -288,7 +289,8 @@ struct GapStreamToInputIterator
   { return (lhs.state == failed) == (rhs.state == failed); }
   
 };
-      
+
+
 static GapStreamToInputIterator endGapStreamIterator()
 {
   GapStreamToInputIterator g;
@@ -323,7 +325,51 @@ Obj JSON_STREAM_TO_GAP(Obj self, Obj stream)
 
   return JsonToGap(v);
 }
-  
+
+// WARNING: This class is only complete enough to work with
+// picojson's iterator support.
+struct GapStringToInputIterator {
+    Obj    obj;
+    size_t pos;
+
+    GapStringToInputIterator() : obj(0), pos(0)
+    {
+    }
+
+    GapStringToInputIterator(Obj s, size_t startpos = 0)
+        : obj(s), pos(startpos)
+    {
+    }
+
+    GapStringToInputIterator(const GapStringToInputIterator & gstii)
+        : obj(gstii.obj), pos(gstii.pos)
+    {
+    }
+
+    char operator*()
+    {
+        return CSTR_STRING(obj)[pos];
+    }
+
+    void operator++()
+    {
+        pos++;
+    }
+
+    friend bool operator==(GapStringToInputIterator & lhs,
+                           GapStringToInputIterator & rhs)
+    {
+        return (lhs.pos == rhs.pos);
+    }
+};
+
+
+static GapStringToInputIterator endGapStringIterator(Obj obj)
+{
+    GapStringToInputIterator g(obj, GET_LEN_STRING(obj));
+    return g;
+}
+
 Obj JSON_STRING_TO_GAP(Obj self, Obj param)
 {
     JSON_setupGAPFunctions();
@@ -341,8 +387,6 @@ Obj JSON_STRING_TO_GAP(Obj self, Obj param)
         real_string = CopyToStringRep(param);
     }
     
-    Char* ptr = CSTR_STRING(real_string);
-    Char* ptrend = ptr + strlen(ptr);
     
     typedef picojson::value_t<gap_type_traits> gmp_value;
     
@@ -350,11 +394,22 @@ Obj JSON_STRING_TO_GAP(Obj self, Obj param)
     
     std::string err;
     bool ungotc_check = false;
-    Char* res = picojson::parse(v, ptr, ptrend, &err, &ungotc_check);
+    GapStringToInputIterator endparse = picojson::parse(
+        v, GapStringToInputIterator(real_string),
+        endGapStringIterator(real_string), &err, &ungotc_check);
+
+    //    Char* res = picojson::parse(v, ptr, ptrend, &err, &ungotc_check);
     if (! err.empty()) {
       ErrorQuit(err.c_str(), 0, 0);
       return Fail;
     }
+
+    // Check end of string
+    Char * ptr = CSTR_STRING(real_string);
+    Char * ptrend = ptr + strlen(ptr);
+
+    // Extra position in the string
+    Char * res = ptr + endparse.pos;
 
     // Woo, this is horrible. The parser steps one character too far
     // if the only thing parsed is a number. So step back.
