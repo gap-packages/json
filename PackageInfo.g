@@ -10,8 +10,9 @@ SetPackageInfo( rec(
 
 PackageName := "json",
 Subtitle := "Reading and Writing JSON",
-Version := "2.0.0",
-Date := "08/06/2018", # dd/mm/yyyy format
+Version := "2.0.1",
+Date := "03/11/2019", # dd/mm/yyyy format
+License := "BSD-2-Clause",
 
 Persons := [
   rec(
@@ -68,7 +69,7 @@ PackageDoc := rec(
 ),
 
 Dependencies := rec(
-  GAP := ">= 4.7.6",
+  GAP := ">= 4.9",
   NeededOtherPackages := [ [ "GAPDoc", ">= 1.5" ] ],
   SuggestedOtherPackages := [ ],
   ExternalConditions := [ ],

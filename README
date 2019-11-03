@@ -19,6 +19,10 @@ types, look at the openmath package, or IO_Pickle in the IO package.
 Updates
 =======
 
+v2.0.1
+======
+
+Fix bug in JsonStringToGap, which could lead to entering the break loop.
 
 v2.0.0
 ======

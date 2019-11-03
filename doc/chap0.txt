@@ -6,10 +6,10 @@
                            [1X Reading and Writing JSON [101X
   
   
-                                     2.0.0
+                                     2.0.1
   
   
-                                  8 June 2018
+                                3 November 2019
   
   
                              Christopher Jefferson
