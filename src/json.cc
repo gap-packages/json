@@ -24,7 +24,7 @@ Obj JsonToGap(const gmp_value& v)
         return v.get<gap_val>().obj;
     } else if (v.is<std::string>()) {
         Obj str;
-        const Char* c_str = v.get<std::string>().c_str();
+        const char* c_str = v.get<std::string>().c_str();
         Int len = v.get<std::string>().size();
         str = NEW_STRING(len);
         memcpy(CHARS_STRING(str), c_str, len);
@@ -398,18 +398,18 @@ Obj JSON_STRING_TO_GAP(Obj self, Obj param)
         v, GapStringToInputIterator(real_string),
         endGapStringIterator(real_string), &err, &ungotc_check);
 
-    //    Char* res = picojson::parse(v, ptr, ptrend, &err, &ungotc_check);
+    //    char* res = picojson::parse(v, ptr, ptrend, &err, &ungotc_check);
     if (! err.empty()) {
       ErrorQuit(err.c_str(), 0, 0);
       return Fail;
     }
 
     // Check end of string
-    Char * ptr = CSTR_STRING(real_string);
-    Char * ptrend = ptr + strlen(ptr);
+    const char * ptr = CSTR_STRING(real_string);
+    const char * ptrend = ptr + strlen(ptr);
 
     // Extra position in the string
-    Char * res = ptr + endparse.pos;
+    const char * res = ptr + endparse.pos;
 
     // Woo, this is horrible. The parser steps one character too far
     // if the only thing parsed is a number. So step back.
