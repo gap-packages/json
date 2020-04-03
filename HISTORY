@@ -1,4 +1,4 @@
-
+2.0.2 : New build system, remove VERSION file
 2.0.1 : Fix GC bug in JsonStringToGap, which would
         lead to spurious break loops.
 2.0.0 : Improve unicode handling.
