@@ -80,15 +80,15 @@ function(o, r)
   local i, first;
   first := true;
   PrintTo(o, "{");
-  for i in RecNames(r) do
+  for i in Set(RecNames(r)) do # sort for output stability across GAP sessions
     if first then
       first := false;
     else
       PrintTo(o, ",");
     fi;
-    _GapToJsonStreamInternal(o, i);
+    _GapToJsonStreamInternal(o, i); # a string or small integer
     PrintTo(o, " : ");
-    _GapToJsonStreamInternal(o, r.(i));
+    _GapToJsonStreamInternal(o, r.(i)); # an arbitrary GAP object
   od;
   PrintTo(o, "}");
 end );
