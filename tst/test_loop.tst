@@ -1,4 +1,6 @@
 gap> LoadPackage("json", false);;
+gap> tmpdir := DirectoryTemporary();;
+gap> tmpname := Filename(tmpdir, "test.json");;
 gap> test_cycle := function(i)
 > local jsonstr, res, jsonstream, s, streamres;
 > jsonstr := GapToJsonString(i);
@@ -17,6 +19,21 @@ gap> test_cycle := function(i)
 > streamres := JsonStreamToGap(s);
 > if res <> streamres then
 >   Print("Failed str/stream back to GAP: ", i, " to ", res, " and ", streamres, "\n");
+> fi;
+> s := OutputTextFile(tmpname, false);
+> GapToJsonStream(s, i);
+> CloseStream(s);
+> s := InputTextFile(tmpname);
+> jsonstream := ReadAll(s);
+> CloseStream(s);
+> if jsonstr <> jsonstream then
+>   Print("Failed str/file match: \n", i, "to \n", jsonstr, " and \n", jsonstream, "\n");
+> fi;
+> s := InputTextFile(tmpname);
+> streamres := JsonStreamToGap(s);
+> CloseStream(s);
+> if res <> streamres then
+>   Print("Failed str/file back to GAP: ", i, " to ", res, " and ", streamres, "\n");
 > fi;
 > end;;
 gap> test_cycle(true);
@@ -51,4 +68,4 @@ gap> test_cycle(rec(a := 1));
 gap> test_cycle(rec(a := [1,2], b := [3,4]));
 gap> test_cycle(rec(a := "4,5,6"));
 gap> test_cycle(rec(a := rec(b := rec(c := "4,5,6"))));
-gap> test_cycle([1,2,[3,4,rec(a := false)],"abc",false,rec(c := ["4",true]),7,8]);
+gap> test_cycle([1,2,[3,4,rec(a := false)],"abc",false,"",rec(c := ["4",true]),7,8]);
