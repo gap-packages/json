@@ -27,20 +27,20 @@ end;
 
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsInt],
 function(o, d)
-  PrintTo(o, String(d));
+  WriteAll(o, STRING_INT(d));
 end );
 
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsFloat],
 function(o, d)
-  PrintTo(o, String(d));
+  WriteAll(o, String(d));
 end );
 
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsBool],
 function(o, b)
   if b = true then
-    PrintTo(o, "true");
+    WriteAll(o, "true");
   elif b = false then
-    PrintTo(o, "false");
+    WriteAll(o, "false");
   else
     Error("Invalid Boolean");
   fi;
@@ -50,47 +50,53 @@ InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsString],
 function(o, s)
   if IsEmpty(s) then
     if IsStringRep(s) then
-      PrintTo(o, "\"\"");
+      WriteAll(o, "\"\"");
     else
-      PrintTo(o, "[]");
+      WriteAll(o, "[]");
     fi;
   else
-    PrintTo(o, "\"", JSON_ESCAPE_STRING(s), "\"");
+    WriteAll(o, "\"");
+    WriteAll(o, JSON_ESCAPE_STRING(s));
+    WriteAll(o, "\"");
   fi;
 end );
 
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsList],
 function(o, l)
   local i, first;
-  first := true;
-  PrintTo(o, "[");
-  for i in l do
-    if first then
-      first := false;
-    else
-      PrintTo(o, ",");
-    fi;
-    _GapToJsonStreamInternal(o, i);
-  od;
-  PrintTo(o, "]");
+  if IsOutputTextStringRep(o) and IsStringRep(o![1]) then
+    GAP_LIST_TO_JSON_STRING(o![1], o, l);
+  else
+    first := true;
+    WriteAll(o, "[");
+    for i in l do
+      if first then
+        first := false;
+      else
+        WriteAll(o, ",");
+      fi;
+      _GapToJsonStreamInternal(o, i);
+    od;
+    WriteAll(o, "]");
+  fi;
 end );
 
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsRecord],
 function(o, r)
   local i, first;
   first := true;
-  PrintTo(o, "{");
+  WriteAll(o, "{");
   for i in Set(RecNames(r)) do # sort for output stability across GAP sessions
     if first then
       first := false;
     else
-      PrintTo(o, ",");
+      WriteAll(o, ",");
     fi;
     _GapToJsonStreamInternal(o, i); # a string or small integer
-    PrintTo(o, " : ");
+    WriteAll(o, " : ");
     _GapToJsonStreamInternal(o, r.(i)); # an arbitrary GAP object
   od;
-  PrintTo(o, "}");
+  WriteAll(o, "}");
 end );
 
 InstallGlobalFunction(GapToJsonStream,

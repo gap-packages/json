@@ -9,6 +9,8 @@
 #include "picojson/picojson.h"
 #include "picojson/gap-traits.h"
 
+static Obj _GapToJsonStreamInternal;
+
 typedef picojson::value_t<gap_type_traits> gmp_value;
 
 Obj JsonToGap(const gmp_value& v)
@@ -224,7 +226,49 @@ Obj JSON_ESCAPE_STRING(Obj self, Obj param)
     return copy;
 }
 
+// Local copy of AppendCStr, as it is a new method in 4.12
+void JSON_AppendCStr(Obj str, const char * buf, UInt len)
+{
+    GAP_ASSERT(IS_MUTABLE_OBJ(str));
+    GAP_ASSERT(IS_STRING_REP(str));
 
+    UInt len1 = GET_LEN_STRING(str);
+    UInt newlen = len1 + len;
+    GROW_STRING(str, newlen);
+    SET_LEN_STRING(str, newlen);
+    CLEAR_FILTS_LIST(str);
+    memcpy(CHARS_STRING(str) + len1, buf, len);
+    CHARS_STRING(str)[newlen] = '\0'; // add terminator
+}
+
+Obj GAP_LIST_TO_JSON_STRING(Obj self, Obj string, Obj stream, Obj list) {
+    RequireDenseList("list", list);
+    Int len = LEN_LIST(list);
+    char buf[50] = {};
+
+    // Call this at the start
+    ConvString(string);
+    JSON_AppendCStr(string, "[", 1);
+    for(int i = 1; i <= len; ++i) {
+        if(i != 1) {
+            JSON_AppendCStr(string, ",", 1);
+        }
+        Obj val = ELM_LIST(list, i);
+        if(IS_INTOBJ(val)) {
+            snprintf(buf, sizeof(buf), "%ld", INT_INTOBJ(val));
+            JSON_AppendCStr(string, buf, strlen(buf));
+        } else if(IS_LIST(val) && !(IS_STRING(val))) {
+            GAP_LIST_TO_JSON_STRING(self, string, stream, val);
+        } else {
+            CALL_2ARGS(_GapToJsonStreamInternal, stream, val);
+            // Convert back in case this call modified the string
+            ConvString(string);
+        }
+    }
+    JSON_AppendCStr(string, "]", 1);
+
+    return 0;
+}
 
 // WARNING: This class is only complete enough to work with
 // picojson's iterator support.
@@ -442,6 +486,8 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("json.c", JSON_STRING_TO_GAP, 1, "string"),
     GVAR_FUNC_TABLE_ENTRY("json.c", JSON_ESCAPE_STRING, 1, "string"),
     GVAR_FUNC_TABLE_ENTRY("json.c", JSON_STREAM_TO_GAP, 1, "string"),
+    GVAR_FUNC_TABLE_ENTRY("json.c", GAP_LIST_TO_JSON_STRING, 3, "string, stream, list"),
+    
 	{ 0 } /* Finish with an empty entry */
 
 };
@@ -453,6 +499,8 @@ static Int InitKernel( StructInitInfo *module )
 {
     /* init filters and functions                                          */
     InitHdlrFuncsFromTable( GVarFuncs );
+
+    ImportGVarFromLibrary("_GapToJsonStreamInternal", &_GapToJsonStreamInternal);
 
     /* return success                                                      */
     return 0;
