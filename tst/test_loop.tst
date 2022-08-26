@@ -51,3 +51,4 @@ gap> test_cycle(rec(a := 1));
 gap> test_cycle(rec(a := [1,2], b := [3,4]));
 gap> test_cycle(rec(a := "4,5,6"));
 gap> test_cycle(rec(a := rec(b := rec(c := "4,5,6"))));
+gap> test_cycle([1,2,[3,4,rec(a := false)],"abc",false,rec(c := ["4",true]),7,8]);
