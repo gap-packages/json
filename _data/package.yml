@@ -1,6 +1,6 @@
 name: json
-version: 2.1.0
-date: 2022-02-22
+version: 2.1.1
+date: 2022-10-18
 description: |
     Reading and Writing JSON
 
@@ -12,7 +12,7 @@ maintainers:
     - name: Christopher Jefferson
       url: http://caj.host.cs.st-andrews.ac.uk/
 
-GAP: ">= 4.9"
+GAP: ">= 4.12"
 
 needed-pkgs:
     - name: "GAPDoc"
@@ -25,10 +25,10 @@ packageinfo: https://gap-packages.github.io/json/PackageInfo.g
 
 downloads:
     - name: .tar.gz
-      url: https://github.com/gap-packages/json/releases/download/v2.1.0/json-2.1.0.tar.gz
+      url: https://github.com/gap-packages/json/releases/download/v2.1.1/json-2.1.1.tar.gz
 
 abstract: |
 
 status: deposited
-doc-html: doc/chap0.html
+doc-html: doc/chap0_mj.html
 doc-pdf: doc/manual.pdf
