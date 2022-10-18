@@ -19,6 +19,17 @@ types, look at the openmath package, or IO_Pickle in the IO package.
 Updates
 =======
 
+v2.1.1
+======
+
+Code cleanups
+
+v2.1.0
+======
+
+Change: Keys in dictionaries are now always outputted in lexicographical order
+
+
 v2.0.1
 ======
 
