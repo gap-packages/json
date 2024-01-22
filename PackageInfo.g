@@ -10,8 +10,8 @@ SetPackageInfo( rec(
 
 PackageName := "json",
 Subtitle := "Reading and Writing JSON",
-Version := "2.1.1",
-Date := "18/10/2022", # dd/mm/yyyy format
+Version := "2.2.0",
+Date := "22/01/2024", # dd/mm/yyyy format
 License := "BSD-2-Clause",
 
 Persons := [
@@ -51,8 +51,8 @@ ArchiveFormats := ".tar.gz",
 ##
 Status := "deposited",
 
-SourceRepository := rec( 
-  Type := "git", 
+SourceRepository := rec(
+  Type := "git",
   URL := "https://github.com/gap-packages/json"
 ),
 IssueTrackerURL := Concatenation( ~.SourceRepository.URL, "/issues" ),
