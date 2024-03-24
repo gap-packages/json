@@ -160,7 +160,7 @@ static UChar * outputUnicodeChar(UChar * s, UInt val)
     return s;
 }
 
-Obj JSON_ESCAPE_STRING(Obj self, Obj param)
+static Obj FuncJSON_ESCAPE_STRING(Obj self, Obj param)
 {
     if(!IS_STRING(param))
     {
@@ -241,7 +241,7 @@ void JSON_AppendCStr(Obj str, const char * buf, UInt len)
     CHARS_STRING(str)[newlen] = '\0'; // add terminator
 }
 
-Obj GAP_LIST_TO_JSON_STRING(Obj self, Obj string, Obj stream, Obj list) {
+static Obj FuncGAP_LIST_TO_JSON_STRING(Obj self, Obj string, Obj stream, Obj list) {
     RequireDenseList("list", list);
     Int len = LEN_LIST(list);
     char buf[50] = {};
@@ -258,7 +258,7 @@ Obj GAP_LIST_TO_JSON_STRING(Obj self, Obj string, Obj stream, Obj list) {
             snprintf(buf, sizeof(buf), "%ld", INT_INTOBJ(val));
             JSON_AppendCStr(string, buf, strlen(buf));
         } else if(IS_LIST(val) && !(IS_STRING(val))) {
-            GAP_LIST_TO_JSON_STRING(self, string, stream, val);
+            FuncGAP_LIST_TO_JSON_STRING(self, string, stream, val);
         } else {
             CALL_2ARGS(_GapToJsonStreamInternal, stream, val);
             // Convert back in case this call modified the string
@@ -350,7 +350,7 @@ struct CleanupCacheGuard
     { callGAPFunction(ClearGAPCacheFunction); }
 };
 
-Obj JSON_STREAM_TO_GAP(Obj self, Obj stream)
+static Obj FuncJSON_STREAM_TO_GAP(Obj self, Obj stream)
 {
   JSON_setupGAPFunctions();
   CleanupCacheGuard ccg;
@@ -414,7 +414,7 @@ static GapStringToInputIterator endGapStringIterator(Obj obj)
     return g;
 }
 
-Obj JSON_STRING_TO_GAP(Obj self, Obj param)
+static Obj FuncJSON_STRING_TO_GAP(Obj self, Obj param)
 {
     JSON_setupGAPFunctions();
     CleanupCacheGuard ccg;
@@ -473,20 +473,12 @@ Obj JSON_STRING_TO_GAP(Obj self, Obj param)
     return JsonToGap(v);
 }
 
-typedef Obj (* GVarFunc)(/*arguments*/);
-
-#define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params) \
-  {#name, nparam, \
-   params, \
-   (GVarFunc)name, \
-   srcfile ":Func" #name }
-
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
-    GVAR_FUNC_TABLE_ENTRY("json.c", JSON_STRING_TO_GAP, 1, "string"),
-    GVAR_FUNC_TABLE_ENTRY("json.c", JSON_ESCAPE_STRING, 1, "string"),
-    GVAR_FUNC_TABLE_ENTRY("json.c", JSON_STREAM_TO_GAP, 1, "string"),
-    GVAR_FUNC_TABLE_ENTRY("json.c", GAP_LIST_TO_JSON_STRING, 3, "string, stream, list"),
+    GVAR_FUNC_1ARGS(JSON_STRING_TO_GAP, string),
+    GVAR_FUNC_1ARGS(JSON_ESCAPE_STRING, string),
+    GVAR_FUNC_1ARGS(JSON_STREAM_TO_GAP, string),
+    GVAR_FUNC_3ARGS(GAP_LIST_TO_JSON_STRING, string, stream, list),
     
 	{ 0 } /* Finish with an empty entry */
 
