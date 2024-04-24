@@ -10,8 +10,8 @@ SetPackageInfo( rec(
 
 PackageName := "json",
 Subtitle := "Reading and Writing JSON",
-Version := "2.2.0",
-Date := "22/01/2024", # dd/mm/yyyy format
+Version := "2.2.1",
+Date := "24/04/2024", # dd/mm/yyyy format
 License := "BSD-2-Clause",
 
 Persons := [
@@ -20,7 +20,7 @@ Persons := [
     IsMaintainer := true,
     FirstNames := "Christopher",
     LastName := "Jefferson",
-    WWWHome := "http://caj.host.cs.st-andrews.ac.uk/",
+    WWWHome := "https://heather.cafe/",
     Email := "caj21@st-andrews.ac.uk",
     PostalAddress := Concatenation(
                "St Andrews\n",
