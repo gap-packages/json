@@ -20,7 +20,7 @@ Persons := [
     IsMaintainer := true,
     FirstNames := "Christopher",
     LastName := "Jefferson",
-    WWWHome := "http://caj.host.cs.st-andrews.ac.uk/",
+    WWWHome := "https://heather.cafe/",
     Email := "caj21@st-andrews.ac.uk",
     PostalAddress := Concatenation(
                "St Andrews\n",
