@@ -226,21 +226,6 @@ static Obj FuncJSON_ESCAPE_STRING(Obj self, Obj param)
     return copy;
 }
 
-// Local copy of AppendCStr, as it is a new method in 4.12
-void JSON_AppendCStr(Obj str, const char * buf, UInt len)
-{
-    GAP_ASSERT(IS_MUTABLE_OBJ(str));
-    GAP_ASSERT(IS_STRING_REP(str));
-
-    UInt len1 = GET_LEN_STRING(str);
-    UInt newlen = len1 + len;
-    GROW_STRING(str, newlen);
-    SET_LEN_STRING(str, newlen);
-    CLEAR_FILTS_LIST(str);
-    memcpy(CHARS_STRING(str) + len1, buf, len);
-    CHARS_STRING(str)[newlen] = '\0'; // add terminator
-}
-
 static Obj FuncGAP_LIST_TO_JSON_STRING(Obj self, Obj string, Obj stream, Obj list) {
     RequireDenseList("list", list);
     Int len = LEN_LIST(list);
@@ -248,15 +233,15 @@ static Obj FuncGAP_LIST_TO_JSON_STRING(Obj self, Obj string, Obj stream, Obj lis
 
     // Call this at the start
     ConvString(string);
-    JSON_AppendCStr(string, "[", 1);
+    AppendCStr(string, "[", 1);
     for(int i = 1; i <= len; ++i) {
         if(i != 1) {
-            JSON_AppendCStr(string, ",", 1);
+            AppendCStr(string, ",", 1);
         }
         Obj val = ELM_LIST(list, i);
         if(IS_INTOBJ(val)) {
             snprintf(buf, sizeof(buf), "%ld", INT_INTOBJ(val));
-            JSON_AppendCStr(string, buf, strlen(buf));
+            AppendCStr(string, buf, strlen(buf));
         } else if(IS_LIST(val) && !(IS_STRING(val))) {
             FuncGAP_LIST_TO_JSON_STRING(self, string, stream, val);
         } else {
@@ -265,7 +250,7 @@ static Obj FuncGAP_LIST_TO_JSON_STRING(Obj self, Obj string, Obj stream, Obj lis
             ConvString(string);
         }
     }
-    JSON_AppendCStr(string, "]", 1);
+    AppendCStr(string, "]", 1);
 
     return 0;
 }
