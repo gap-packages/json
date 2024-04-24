@@ -188,7 +188,7 @@ static Obj FuncJSON_ESCAPE_STRING(Obj self, Obj param)
         return param;
 
     // Massively over-long string
-    Obj     copy = NEW_STRING(lenString * 6);
+    Obj     copy = NEW_STRING(lenString * 6 + 7);
     UChar * base = CHARS_STRING(copy);
     UChar * out = base;
     Int     i = 1;
@@ -211,7 +211,7 @@ static Obj FuncJSON_ESCAPE_STRING(Obj self, Obj param)
             default:
                 if(u < ' ')
                 {
-                    sprintf((char*)out,"\\u%04X",(unsigned)u);
+                    snprintf((char*)out,7, "\\u%04X",(unsigned)u);
                     out += 6;
                 }
                 else
