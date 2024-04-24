@@ -1,3 +1,4 @@
+2.2.1 : Internal cleanups for new GAP versions
 2.2.0 : Speed up outputting JSON, add new tests
 2.1.1 : Improve CI, use new GAP functionality
 2.1.0 : Fix the ordering used when outputting records
