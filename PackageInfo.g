@@ -76,7 +76,7 @@ Dependencies := rec(
 ),
 
 AvailabilityTest := function()
-   if Filename(DirectoriesPackagePrograms("json"), "json.so") = fail then
+   if IsKernelExtensionAvailable("json") = false then
      LogPackageLoadingMessage( PACKAGE_WARNING,
              [ "kernel functions for json are not available." ] );
      return false;
