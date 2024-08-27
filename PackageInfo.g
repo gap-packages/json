@@ -10,8 +10,8 @@ SetPackageInfo( rec(
 
 PackageName := "json",
 Subtitle := "Reading and Writing JSON",
-Version := "2.2.1",
-Date := "24/04/2024", # dd/mm/yyyy format
+Version := "2.2.2",
+Date := "27/08/2024", # dd/mm/yyyy format
 License := "BSD-2-Clause",
 
 Persons := [
@@ -76,7 +76,7 @@ Dependencies := rec(
 ),
 
 AvailabilityTest := function()
-   if Filename(DirectoriesPackagePrograms("json"), "json.so") = fail then
+   if IsKernelExtensionAvailable("json") = false then
      LogPackageLoadingMessage( PACKAGE_WARNING,
              [ "kernel functions for json are not available." ] );
      return false;

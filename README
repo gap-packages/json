@@ -19,6 +19,21 @@ types, look at the openmath package, or IO_Pickle in the IO package.
 Updates
 =======
 
+v2.2.2
+======
+
+Use up-to-date methods of loading packages in GAP
+
+2.2.1
+=====
+
+Internal cleanups for new GAP versions
+
+2.2.0
+=====
+
+Speed up outputting JSON, add new tests
+
 v2.1.1
 ======
 
@@ -41,3 +56,9 @@ v2.0.0
 The Json package now ensures it only outputs valid UTF8. GAP strings which
 contain valid UTF8 are outputted unmodified, invalid UTF8 is treated as Latin-1,
 and transformed into valid UTF8.
+
+
+1.2.0 : Fix compiling in recent versions of XCode on Mac OS X
+1.1.0 : Fix bug in handling badly formatted integers
+1.0.1 : Fix bug in nested structures
+1.0.0 : First release

@@ -1,6 +1,6 @@
 name: json
-version: 2.2.1
-date: 2024-04-24
+version: 2.2.2
+date: 2024-08-27
 description: |
     Reading and Writing JSON
 
@@ -25,7 +25,7 @@ packageinfo: https://gap-packages.github.io/json/PackageInfo.g
 
 downloads:
     - name: .tar.gz
-      url: https://github.com/gap-packages/json/releases/download/v2.2.1/json-2.2.1.tar.gz
+      url: https://github.com/gap-packages/json/releases/download/v2.2.2/json-2.2.2.tar.gz
 
 abstract: |
 
