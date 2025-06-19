@@ -2,7 +2,7 @@
  * json: Reading and Writing JSON
  */
 
-#include "compiled.h" // GAP headers
+#include "gap_all.h" // GAP headers
 
 #include "gap-functions.h"
 
