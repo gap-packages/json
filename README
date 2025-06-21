@@ -19,18 +19,23 @@ types, look at the openmath package, or IO_Pickle in the IO package.
 Updates
 =======
 
+v2.2.3
+======
+
+Internal cleanups for new GAP versions
+
 v2.2.2
 ======
 
 Use up-to-date methods of loading packages in GAP
 
-2.2.1
-=====
+v2.2.1
+======
 
 Internal cleanups for new GAP versions
 
-2.2.0
-=====
+v2.2.0
+======
 
 Speed up outputting JSON, add new tests
 
