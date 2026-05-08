@@ -19,6 +19,11 @@ types, look at the openmath package, or IO_Pickle in the IO package.
 Updates
 =======
 
+v2.3.0
+======
+
+Allow outputting 'fail', it maps to null (null was already read in as fail)
+
 v2.2.3
 ======
 
