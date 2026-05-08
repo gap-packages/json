@@ -37,12 +37,15 @@ end );
 
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsBool],
 function(o, b)
+  # GAP's `fail` is the third value satisfying IsBool. JsonStringToGap
+  # already deserialises JSON `null` as `fail`; round-trip the other way
+  # so the encode/decode pair is symmetric.
   if b = true then
     WriteAll(o, "true");
   elif b = false then
     WriteAll(o, "false");
   else
-    Error("Invalid Boolean");
+    WriteAll(o, "null");
   fi;
 end );
 

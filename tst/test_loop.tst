@@ -38,6 +38,7 @@ gap> test_cycle := function(i)
 > end;;
 gap> test_cycle(true);
 gap> test_cycle(false);
+gap> test_cycle(fail);
 gap> test_cycle(-1);
 gap> test_cycle(0);
 gap> test_cycle(1);
