@@ -348,7 +348,7 @@ static Obj FuncJSON_STREAM_TO_GAP(Obj self, Obj stream)
   bool ungotc_check = false;
   picojson::parse(v, GapStreamToInputIterator(stream), endGapStreamIterator(), &err, &ungotc_check);
   if (! err.empty()) {
-    ErrorQuit(err.c_str(), 0, 0);
+    ErrorQuit("%s", err.c_str(), 0);
     return Fail;
   }
 
@@ -429,7 +429,7 @@ static Obj FuncJSON_STRING_TO_GAP(Obj self, Obj param)
 
     //    char* res = picojson::parse(v, ptr, ptrend, &err, &ungotc_check);
     if (! err.empty()) {
-      ErrorQuit(err.c_str(), 0, 0);
+      ErrorQuit("%s", err.c_str(), 0);
       return Fail;
     }
 
