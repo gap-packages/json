@@ -25,6 +25,18 @@ _JSON_clearRefs := function()
   _JSON_Globals := [];
 end;
 
+# Called from C by GAP_OBJ_TO_JSON_STRING to serialise objects it does not
+# handle directly (floats, large integers, component objects, and any types
+# with a user-installed _GapToJsonStreamInternal method).
+_JSON_ObjToString := function(obj)
+  local str, s;
+  str := "";
+  s := OutputTextString(str, true);
+  SetPrintFormattingStatus(s, false);
+  _GapToJsonStreamInternal(s, obj);
+  return str;
+end;
+
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsInt],
 function(o, d)
   WriteAll(o, STRING_INT(d));
@@ -114,12 +126,7 @@ end );
 
 InstallGlobalFunction(GapToJsonString,
 function(obj)
-  local str, s;
-  str := "";
-  s := OutputTextString(str, true);
-  SetPrintFormattingStatus(s, false);
-  GapToJsonStream(s, obj);
-  return str;
+  return GAP_OBJ_TO_JSON_STRING(obj);
 end );
 
 InstallGlobalFunction(JsonStringToGap,
