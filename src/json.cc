@@ -69,8 +69,13 @@ static Int numberOfBytes(UInt c)
     return 4;
 }
 
-static Int getChar(Obj list, Int pos)
+// Reading past the end of <list> yields 0, which is not a continuation byte,
+// so a truncated multi-byte sequence at the end of the string falls back to
+// Latin-1 like any other malformed one.
+static Int getChar(Obj list, Int len, Int pos)
 {
+    if (pos > len)
+        return 0;
     Obj c = ELM_LIST(list, pos);
     if (c == NULL)
         return 0;
@@ -78,20 +83,20 @@ static Int getChar(Obj list, Int pos)
         return *((UChar *)ADDR_OBJ(c));
 }
 
-static Int getUTF8Char(Obj list, Int * basepos)
+static Int getUTF8Char(Obj list, Int len, Int * basepos)
 {
     Int  pos = *basepos;
-    UInt val = getChar(list, pos);
+    UInt val = getChar(list, len, pos);
     UInt singlebyte_val = val;
-    Int  len = numberOfBytes(val);
+    Int  nbytes = numberOfBytes(val);
     pos++;
 
-    if (len == 1) {
+    if (nbytes == 1) {
         *basepos = pos;
         return val;
     }
 
-    switch (len) {
+    switch (nbytes) {
     case 2:
         val = val & 0x3F;
         if (val & 0x20)
@@ -112,8 +117,8 @@ static Int getUTF8Char(Obj list, Int * basepos)
     }
     val = val & 0x3F;
 
-    for (Int i = 1; i < len; ++i) {
-        UInt c = getChar(list, pos);
+    for (Int i = 1; i < nbytes; ++i) {
+        UInt c = getChar(list, len, pos);
         if ((c & 0xC0) != 0x80)
             goto invalid;
         val = (val << 6) | (c & 0x3F);
@@ -193,7 +198,7 @@ static Obj FuncJSON_ESCAPE_STRING(Obj self, Obj param)
     UChar * out = base;
     Int     i = 1;
     while (i <= lenString) {
-        Int u = getUTF8Char(param, &i);
+        Int u = getUTF8Char(param, lenString, &i);
         switch(u)
         {
             case '\\': case '"': case '/':
