@@ -55,6 +55,47 @@ BindGlobal( "_JSON_TS_ACCEPTED", MakeImmutable( [
   "i_structure_500_nested_arrays.json",
 ] ) );
 
+
+#############################################################################
+##
+#F  _JSON_TS_Normalize( <obj> )
+##
+##  A canonical string for a parsed value, used to compare the results of the
+##  two implementations. Strings become lists of byte values, so that the
+##  deliberately malformed UTF-8 in the corpus can be compared without being
+##  re-encoded, and record components are sorted, so that the order in which
+##  the parsers happened to fill a record does not matter.
+##
+DeclareGlobalFunction( "_JSON_TS_Normalize" );
+
+InstallGlobalFunction( _JSON_TS_Normalize, function(obj)
+  local parts, nam;
+
+  if obj = fail then
+    return "null";
+  elif obj = true then
+    return "true";
+  elif obj = false then
+    return "false";
+  elif IsInt(obj) then
+    return Concatenation("I", String(obj));
+  elif IsFloat(obj) then
+    return Concatenation("F", String(obj));
+  elif IsStringRep(obj) then
+    return Concatenation("S", String(List(obj, IntChar)));
+  elif IsRecord(obj) then
+    parts := List(SortedList(RecNames(obj)),
+                  nam -> Concatenation(_JSON_TS_Normalize(nam), ":",
+                                       _JSON_TS_Normalize(obj.(nam))));
+    return Concatenation("{", JoinStringsWithSeparator(parts, ","), "}");
+  elif IsList(obj) then
+    parts := List(obj, _JSON_TS_Normalize);
+    return Concatenation("[", JoinStringsWithSeparator(parts, ","), "]");
+  fi;
+
+  ErrorNoReturn("unexpected value returned by JSON parser");
+end );
+
 #############################################################################
 ##
 #F  _JSON_TS_Files( )
@@ -74,7 +115,8 @@ end );
 ##
 #F  _JSON_TS_Parse( <dir>, <file> )
 ##
-##  Parses one corpus file and reports whether it was accepted.
+##  Parses one corpus file, returning either [ true, <normalized value> ] or
+##  [ false ].
 ##
 BindGlobal( "_JSON_TS_Parse", function(dir, file)
   local readOnlyOutput, savedBreakOnError, savedOutput, sink, res;
@@ -97,7 +139,10 @@ BindGlobal( "_JSON_TS_Parse", function(dir, file)
     MakeReadOnlyGlobal("ERROR_OUTPUT");
   fi;
   CloseStream(sink);
-  return res[1];
+  if res[1] then
+    return [ true, _JSON_TS_Normalize(res[2]) ];
+  fi;
+  return [ false ];
 end );
 
 
@@ -115,7 +160,7 @@ BindGlobal( "_JSON_TS_CheckConformance", function()
   dir := data[1];
 
   for file in data[2] do
-    accepted := _JSON_TS_Parse(dir, file);
+    accepted := _JSON_TS_Parse(dir, file)[1];
     if file[1] = 'y' then
       expected := true;
     elif file[1] = 'n' then
@@ -131,4 +176,38 @@ BindGlobal( "_JSON_TS_CheckConformance", function()
       fi;
     fi;
   od;
+end );
+
+
+#############################################################################
+##
+#F  _JSON_TS_CheckAgreement( )
+##
+##  Checks that every available implementation parses the corpus the same way,
+##  and prints a line for every disagreement. Does nothing when only one
+##  implementation is present.
+##
+BindGlobal( "_JSON_TS_CheckAgreement", function()
+  local impls, saved, data, dir, file, results, i;
+
+  impls := JsonAvailableImplementations();
+  saved := JsonImplementation();
+  data := _JSON_TS_Files();
+  dir := data[1];
+
+  for file in data[2] do
+    results := [];
+    for i in impls do
+      SetJsonImplementation(i);
+      Add(results, _JSON_TS_Parse(dir, file));
+    od;
+    for i in [ 2 .. Length(impls) ] do
+      if results[i] <> results[1] then
+        Print(file, ": ", impls[1], " gave ", results[1],
+              " but ", impls[i], " gave ", results[i], "\n");
+      fi;
+    od;
+  od;
+
+  SetJsonImplementation(saved);
 end );

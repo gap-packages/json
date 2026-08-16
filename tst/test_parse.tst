@@ -63,3 +63,16 @@ gap> JsonStringToGap("[1,2]x");
 Error, Failed to parse end of string: 'x'
 gap> JsonStringToGap("{}x");
 Error, Failed to parse end of string: 'x'
+
+# The GAP parser accepts its documented limit and rejects the next level with
+# an ordinary error rather than overflowing the C stack.
+gap> old_json_implementation := SetJsonImplementation("gap");;
+gap> deep_json := Concatenation(
+>   Concatenation(ListWithIdenticalEntries(1024, "[")), "0",
+>   Concatenation(ListWithIdenticalEntries(1024, "]")));;
+gap> Length(Flat(JsonStringToGap(deep_json)));
+1
+gap> too_deep_json := Concatenation("[", deep_json, "]");;
+gap> JsonStringToGap(too_deep_json);
+Error, JSON input nested more than _JSON_MAX_DEPTH (1024) levels deep
+gap> SetJsonImplementation(old_json_implementation);;

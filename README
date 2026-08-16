@@ -15,9 +15,24 @@ Note that this library will not map any other GAP types, such as groups,
 permutations, to or from JSON. If you wish to map between more complex
 types, look at the openmath package, or IO_Pickle in the IO package.
 
+The package ships a JSON parser written in C and an equivalent one written
+in GAP. The C one needs the package's kernel extension to have been compiled
+and is used automatically whenever it is present; otherwise the GAP one takes
+over, so the package works either way. See JsonAvailableImplementations,
+JsonImplementation and SetJsonImplementation in the manual.
+
 
 Updates
 =======
+
+unreleased
+==========
+
+- Make the kernel extension optional. Without it, the package falls back to a
+  JSON parser and string escaper written in GAP. SetJsonImplementation can be
+  used to switch between the implementations at runtime.
+
+- Add the JSONTestSuite parsing corpus.
 
 v2.5.0
 ======

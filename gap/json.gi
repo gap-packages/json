@@ -71,7 +71,7 @@ function(o, s)
     fi;
   else
     WriteAll(o, "\"");
-    WriteAll(o, JSON_ESCAPE_STRING(s));
+    WriteAll(o, _JSON_ACTIVE.EscapeString(s));
     WriteAll(o, "\"");
   fi;
 end );
@@ -79,8 +79,11 @@ end );
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsList],
 function(o, l)
   local i, first;
-  if IsOutputTextStringRep(o) and IsStringRep(o![1]) then
-    GAP_LIST_TO_JSON_STRING(o![1], o, l);
+  # the kernel fast path is a pure optimisation producing byte-identical
+  # output, so the pure GAP implementation just falls through to the loop
+  if _JSON_ACTIVE.ListToString <> fail
+     and IsOutputTextStringRep(o) and IsStringRep(o![1]) then
+    _JSON_ACTIVE.ListToString(o![1], o, l);
   else
     first := true;
     WriteAll(o, "[");
@@ -126,15 +129,15 @@ end );
 
 InstallGlobalFunction(GapToJsonString,
 function(obj)
-  return GAP_OBJ_TO_JSON_STRING(obj);
+  return _JSON_ACTIVE.ObjToString(obj);
 end );
 
 InstallGlobalFunction(JsonStringToGap,
 function(str)
-  return JSON_STRING_TO_GAP(str);
+  return _JSON_ACTIVE.StringToGap(str);
 end );
 
 InstallGlobalFunction(JsonStreamToGap,
 function(str)
-  return JSON_STREAM_TO_GAP(str);
+  return _JSON_ACTIVE.StreamToGap(str);
 end );
