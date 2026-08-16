@@ -17,9 +17,22 @@ Note that this library will not map any other GAP types, such as groups,
 permutations, to or from JSON. If you wish to map between more complex
 types, look at the openmath package, or IO_Pickle in the IO package.
 
+Parsing and string escaping have equivalent C and pure GAP implementations.
+The C backend is used when the kernel extension has been compiled; otherwise
+the GAP backend takes over automatically. The existing GAP serialisation
+methods are shared by both paths, with the kernel accelerating common objects.
+
 
 Updates
 =======
+
+unreleased
+==========
+
+- Make the kernel extension optional. Without it, the package falls back to a
+  JSON parser and string escaper written in GAP.
+
+- Add the JSONTestSuite parsing corpus.
 
 v2.5.0
 ======

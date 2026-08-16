@@ -98,3 +98,21 @@ gap> JsonStringToGap(utf8([224,128,128]));
 Error, invalid UTF-8 in JSON string
 gap> JsonStringToGap(utf8([240,128,128,128]));
 Error, invalid UTF-8 in JSON string
+
+# The pure GAP fallback has the same deliberate extensions and hard limits.
+gap> _JSON_PureStringToGap("01");
+1
+gap> IsNaN(_JSON_PureStringToGap("NaN"));
+true
+gap> _JSON_PureStringToGap(utf8([192,175]));
+Error, invalid UTF-8 in JSON string
+gap> _JSON_PureStringToGap(Concatenation("1", [CHAR_INT(0)], "2"));
+Error, Unexpected non-whitespace after JSON value at byte 2
+gap> IsList(_JSON_PureStringToGap(nested(1024)));
+true
+gap> _JSON_PureStringToGap(nested(1025));
+Error, JSON input nested more than 1024 levels deep
+gap> pureStream := InputTextString("[1][2]");;
+gap> [ _JSON_PureStreamToGap(pureStream), _JSON_PureStreamToGap(pureStream) ];
+[ [ 1 ], [ 2 ] ]
+gap> CloseStream(pureStream);

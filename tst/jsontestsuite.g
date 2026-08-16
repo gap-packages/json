@@ -46,6 +46,47 @@ BindGlobal( "_JSON_TS_ACCEPTED", MakeImmutable( [
   "i_structure_500_nested_arrays.json",
 ] ) );
 
+
+#############################################################################
+##
+#F  _JSON_TS_Normalize( <obj> )
+##
+##  A canonical string for a parsed value, used to compare the results of the
+##  two implementations. Strings become lists of byte values, so that the
+##  deliberately malformed UTF-8 in the corpus can be compared without being
+##  re-encoded, and record components are sorted, so that the order in which
+##  the parsers happened to fill a record does not matter.
+##
+DeclareGlobalFunction( "_JSON_TS_Normalize" );
+
+InstallGlobalFunction( _JSON_TS_Normalize, function(obj)
+  local parts, nam;
+
+  if obj = fail then
+    return "null";
+  elif obj = true then
+    return "true";
+  elif obj = false then
+    return "false";
+  elif IsInt(obj) then
+    return Concatenation("I", String(obj));
+  elif IsFloat(obj) then
+    return Concatenation("F", String(obj));
+  elif IsStringRep(obj) then
+    return Concatenation("S", String(List(obj, IntChar)));
+  elif IsRecord(obj) then
+    parts := List(SortedList(RecNames(obj)),
+                  nam -> Concatenation(_JSON_TS_Normalize(nam), ":",
+                                       _JSON_TS_Normalize(obj.(nam))));
+    return Concatenation("{", JoinStringsWithSeparator(parts, ","), "}");
+  elif IsList(obj) then
+    parts := List(obj, _JSON_TS_Normalize);
+    return Concatenation("[", JoinStringsWithSeparator(parts, ","), "]");
+  fi;
+
+  ErrorNoReturn("unexpected value returned by JSON parser");
+end );
+
 #############################################################################
 ##
 #F  _JSON_TS_Files( )
@@ -63,11 +104,12 @@ end );
 
 #############################################################################
 ##
-#F  _JSON_TS_Parse( <dir>, <file> )
+#F  _JSON_TS_ParseWith( <parser>, <dir>, <file> )
 ##
-##  Parses one corpus file and reports whether it was accepted.
+##  Parses one corpus file, returning either [ true, <normalized value> ] or
+##  [ false ].
 ##
-BindGlobal( "_JSON_TS_Parse", function(dir, file)
+BindGlobal( "_JSON_TS_ParseWith", function(parser, dir, file)
   local readOnlyOutput, savedBreakOnError, savedOutput, sink, res;
   # most of the corpus is meant to be rejected, so send the error messages to
   # a sink rather than into the test output
@@ -80,7 +122,7 @@ BindGlobal( "_JSON_TS_Parse", function(dir, file)
   sink := OutputTextString("", false);
   BreakOnError := false;
   ERROR_OUTPUT := sink;
-  res := CALL_WITH_CATCH(JsonStringToGap,
+  res := CALL_WITH_CATCH(parser,
                          [ StringFile(Filename(Directory(dir), file)) ]);
   ERROR_OUTPUT := savedOutput;
   BreakOnError := savedBreakOnError;
@@ -88,7 +130,15 @@ BindGlobal( "_JSON_TS_Parse", function(dir, file)
     MakeReadOnlyGlobal("ERROR_OUTPUT");
   fi;
   CloseStream(sink);
-  return res[1];
+  if res[1] then
+    return [ true, _JSON_TS_Normalize(res[2]) ];
+  fi;
+  return [ false ];
+end );
+
+
+BindGlobal( "_JSON_TS_Parse", function(dir, file)
+  return _JSON_TS_ParseWith(JsonStringToGap, dir, file);
 end );
 
 
@@ -106,7 +156,7 @@ BindGlobal( "_JSON_TS_CheckConformance", function()
   dir := data[1];
 
   for file in data[2] do
-    accepted := _JSON_TS_Parse(dir, file);
+    accepted := _JSON_TS_Parse(dir, file)[1];
     if file[1] = 'y' then
       expected := true;
     elif file[1] = 'n' then
@@ -120,6 +170,32 @@ BindGlobal( "_JSON_TS_CheckConformance", function()
       else
         Print("unexpectedly rejected: ", file, "\n");
       fi;
+    fi;
+  od;
+end );
+
+
+#############################################################################
+##
+#F  _JSON_TS_CheckAgreement( )
+##
+##  Compares the kernel and pure GAP parsers when both are available, and
+##  prints a line for every disagreement.
+##
+BindGlobal( "_JSON_TS_CheckAgreement", function()
+  local data, dir, file, kernel, pure;
+
+  if not _JSON_KERNEL_AVAILABLE then
+    return;
+  fi;
+
+  data := _JSON_TS_Files();
+  dir := data[1];
+  for file in data[2] do
+    kernel := _JSON_TS_ParseWith(ValueGlobal("JSON_STRING_TO_GAP"), dir, file);
+    pure := _JSON_TS_ParseWith(_JSON_PureStringToGap, dir, file);
+    if kernel <> pure then
+      Print(file, ": kernel gave ", kernel, " but GAP gave ", pure, "\n");
     fi;
   od;
 end );
