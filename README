@@ -15,6 +15,12 @@ Note that this library will not map any other GAP types, such as groups,
 permutations, to or from JSON. If you wish to map between more complex
 types, look at the openmath package, or IO_Pickle in the IO package.
 
+The package ships a JSON parser written in C and an equivalent one written
+in GAP. The C one needs the package's kernel extension to have been compiled
+and is used automatically whenever it is present; otherwise the GAP one takes
+over, so the package works either way. See JsonAvailableImplementations,
+JsonImplementation and SetJsonImplementation in the manual.
+
 
 Updates
 =======
@@ -22,11 +28,19 @@ Updates
 unreleased
 ======
 
-Fix a buffer over-read when escaping a string whose last character is a
-truncated multi-byte UTF-8 sequence, such as [ CHAR_INT(200) ]. Reading past
-the end of the string now yields 0 rather than whatever happened to follow it,
-so the sequence falls back to Latin-1 like any other malformed one instead of
-raising an error or reading out of bounds.
+- Fix a buffer over-read when escaping a string whose last character is a
+  truncated multi-byte UTF-8 sequence, such as [ CHAR_INT(200) ]. Reading past
+  the end of the string now yields 0 rather than whatever happened to follow
+  it, so the sequence falls back to Latin-1 like any other malformed one
+  instead of raising an error or reading out of bounds.
+
+- The kernel extension is now optional: without it the package falls back to a
+  JSON parser written in GAP, which accepts and rejects the same texts, produces
+  the same values and reports the same errors. SetJsonImplementation switches
+  between the two at runtime.
+
+- The test suite now includes JSONTestSuite (https://github.com/nst/JSONTestSuite)
+  and runs everything through both implementations.
 
 v2.3.0
 ======

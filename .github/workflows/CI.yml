@@ -43,3 +43,18 @@ jobs:
       - uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  # Exercise the pure GAP fallback on its own, by not building the kernel
+  # extension at all.
+  test-without-kernel-extension:
+    name: no kernel extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: gap-actions/setup-gap@v3
+      - uses: gap-actions/run-pkg-tests@v4
+      - uses: gap-actions/process-coverage@v3
+      - uses: codecov/codecov-action@v6
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
