@@ -19,6 +19,15 @@ types, look at the openmath package, or IO_Pickle in the IO package.
 Updates
 =======
 
+unreleased
+======
+
+Fix a buffer over-read when escaping a string whose last character is a
+truncated multi-byte UTF-8 sequence, such as [ CHAR_INT(200) ]. Reading past
+the end of the string now yields 0 rather than whatever happened to follow it,
+so the sequence falls back to Latin-1 like any other malformed one instead of
+raising an error or reading out of bounds.
+
 v2.3.0
 ======
 
