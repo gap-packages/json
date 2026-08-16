@@ -1,0 +1,21 @@
+JSONTestSuite
+=============
+
+The .json files in this directory are the test_parsing corpus of
+
+    https://github.com/nst/JSONTestSuite
+    commit 1ef36fa01286573e846ac449e8683f8833c5b26a (2024-11-22)
+
+copyright (c) 2016 Nicolas Seriot and distributed under the MIT license, see
+the file LICENSE next to this one.
+
+Following the upstream convention, a file whose name starts with `y_` must be
+accepted, one starting with `n_` must be rejected, and one starting with `i_`
+may go either way.
+
+Two upstream files are omitted: n_structure_100000_opening_arrays.json and
+n_structure_open_array_object.json nest 100000 levels deep, which overflows
+the C stack and crashes GAP outright when the kernel extension is in use.
+
+tst/test_jsontestsuite.tst runs the corpus through whichever implementation is
+active and compares the outcome against the table in tst/jsontestsuite.g.
