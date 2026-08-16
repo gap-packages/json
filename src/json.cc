@@ -9,7 +9,11 @@
 #include "picojson/picojson.h"
 #include "picojson/gap-traits.h"
 
+#include <cstdlib>
+#include <cstring>
+
 static Obj _GapToJsonStreamInternal;
+static Obj _JSON_ObjToString;
 
 typedef picojson::value_t<gap_type_traits> gmp_value;
 
@@ -160,6 +164,26 @@ static UChar * outputUnicodeChar(UChar * s, UInt val)
     return s;
 }
 
+// Does <param> (a string, possibly not in string rep) contain any character
+// that JSON string output must escape or re-encode?
+static Int jsonNeedsEscaping(Obj param, Int lenString)
+{
+    for (Int i = 1; i <= lenString; ++i) {
+        Obj gapchar = ELMW_LIST(param, i);
+        UChar u = *((UChar*)ADDR_OBJ(gapchar));
+        switch(u)
+        {
+            case '\\': case '"': case '/': case '\b':
+            case '\t': case '\n': case '\f': case '\r':
+                return 1;
+            default:
+                if (u < ' ' || u >= 128)
+                    return 1;
+        }
+    }
+    return 0;
+}
+
 static Obj FuncJSON_ESCAPE_STRING(Obj self, Obj param)
 {
     if(!IS_STRING(param))
@@ -167,24 +191,9 @@ static Obj FuncJSON_ESCAPE_STRING(Obj self, Obj param)
         ErrorQuit("Input to JsonEscapeString must be a string", 0, 0);
     }
 
-    Int needEscaping = 0;
     Int lenString = LEN_LIST(param);
-    for (Int i = 1; i <= lenString && needEscaping == 0; ++i) {
-        Obj gapchar = ELMW_LIST(param, i);
-        UChar u = *((UChar*)ADDR_OBJ(gapchar));
-        switch(u)
-        {
-            case '\\': case '"': case '/': case '\b':
-            case '\t': case '\n': case '\f': case '\r':
-                needEscaping = 1;
-                break;
-            default:
-                if (u < ' ' || u >= 128)
-                    needEscaping = 1;
-        }
-    }
 
-    if (needEscaping == 0)
+    if (jsonNeedsEscaping(param, lenString) == 0)
         return param;
 
     // Massively over-long string
@@ -253,6 +262,240 @@ static Obj FuncGAP_LIST_TO_JSON_STRING(Obj self, Obj string, Obj stream, Obj lis
     AppendCStr(string, "]", 1);
 
     return 0;
+}
+
+/******************************************************************************
+** Direct-to-string JSON serialiser used by GapToJsonString.
+**
+** GapToJsonString owns its output string, so instead of writing through an
+** OutputTextString + AppendCStr we manage the string as a raw buffer: we
+** over-allocate, write directly, and shrink to the exact length at the end.
+**
+** GC discipline: a raw pointer into a GAP string bag is invalidated by any
+** allocation, so we never *store* one. The buffer state is the string bag
+** handle (stable across GC) plus the length and capacity as plain integers
+** (GC-immune). Every write primitive calls jbuf_ensure first, then fetches
+** CHARS_STRING(str) freshly and writes with no allocation in between. This
+** means callers may allocate/GC freely between primitives (e.g. the fallback
+** below) with nothing to re-derive.
+******************************************************************************/
+
+struct JBuf {
+    Obj    str;    // the growing GAP string bag (handle stable across GC)
+    size_t len;    // bytes written so far
+    size_t cap;    // capacity in bytes (== the length passed to GROW_STRING)
+};
+
+// Ensure room for `need` more bytes. May allocate (and GC); callers must hold
+// no raw string pointer across this call, only the JBuf.
+static inline void jbuf_ensure(JBuf * b, size_t need)
+{
+    if (b->cap - b->len < need) {
+        size_t newcap = b->cap ? b->cap : 256;
+        while (newcap - b->len < need)
+            newcap *= 2;
+        GROW_STRING(b->str, newcap);
+        b->cap = newcap;
+    }
+}
+
+static inline void jbuf_putc(JBuf * b, char c)
+{
+    jbuf_ensure(b, 1);
+    CHARS_STRING(b->str)[b->len++] = (UChar)c;
+}
+
+static inline void jbuf_putlit(JBuf * b, const char * s, size_t n)
+{
+    jbuf_ensure(b, n);
+    memcpy(CHARS_STRING(b->str) + b->len, s, n);
+    b->len += n;
+}
+
+// Append <str> (must be in string rep) as a quoted, escaped JSON string.
+static void jbuf_json_string(JBuf * b, Obj str)
+{
+    Int len = LEN_LIST(str);
+
+    if (jsonNeedsEscaping(str, len) == 0) {
+        // No escaping needed: quote + raw bytes. Fetch both string pointers
+        // *after* jbuf_ensure, in the same no-allocation region.
+        jbuf_ensure(b, (size_t)len + 2);
+        UChar * out = CHARS_STRING(b->str) + b->len;
+        *out++ = '"';
+        memcpy(out, CONST_CSTR_STRING(str), len);
+        out += len;
+        *out++ = '"';
+        b->len += (size_t)len + 2;
+        return;
+    }
+
+    // Worst case is 6 bytes per input byte (\uXXXX). Reserve once so the walk
+    // below allocates nothing; base/out stay valid throughout.
+    jbuf_ensure(b, (size_t)len * 6 + 2);
+    UChar * base = CHARS_STRING(b->str);
+    UChar * out = base + b->len;
+    *out++ = '"';
+    Int i = 1;
+    while (i <= len) {
+        Int u = getUTF8Char(str, &i);
+        switch(u)
+        {
+            case '\\': case '"': case '/':
+                out[0] = '\\';
+                out[1] = u;
+                out += 2;
+                break;
+#define ESCAPE_CASE(x,y) case x: out[0] = '\\'; out[1] = y; out += 2; break;
+            ESCAPE_CASE('\b', 'b');
+            ESCAPE_CASE('\t', 't');
+            ESCAPE_CASE('\n', 'n');
+            ESCAPE_CASE('\f', 'f');
+            ESCAPE_CASE('\r', 'r');
+#undef ESCAPE_CASE
+            default:
+                if(u < ' ')
+                {
+                    snprintf((char*)out, 7, "\\u%04X", (unsigned)u);
+                    out += 6;
+                }
+                else
+                {
+                    out = outputUnicodeChar(out, u);
+                }
+        }
+    }
+    *out++ = '"';
+    b->len = out - base;
+}
+
+// Record fields sorted by name, for byte-stable output (matches Set(RecNames)).
+struct JsonFieldRef {
+    const UChar * name;
+    UInt          len;
+    UInt          pos;
+};
+
+static int jsonFieldRefCmp(const void * a, const void * b)
+{
+    const JsonFieldRef * fa = (const JsonFieldRef *)a;
+    const JsonFieldRef * fb = (const JsonFieldRef *)b;
+    UInt m = fa->len < fb->len ? fa->len : fb->len;
+    int  c = memcmp(fa->name, fb->name, m);
+    if (c != 0)
+        return c;
+    if (fa->len != fb->len)
+        return fa->len < fb->len ? -1 : 1;
+    return 0;
+}
+
+static void serialiseJson(JBuf * b, Obj obj);
+
+static void serialiseJsonRecord(JBuf * b, Obj rec)
+{
+    // Sort (and de-duplicate) the record's components, exactly as RecNames
+    // does. Afterwards all stored rnams are negated (the "sorted" marker), so
+    // the true rnam is -GET_RNAM_PREC(...). Without this, freshly built records
+    // can hold positive/unsorted rnams and NAME_RNAM indexes out of range.
+    SortPRecRNam(rec);
+    UInt n = LEN_PREC(rec);
+    jbuf_putc(b, '{');
+    if (n > 0) {
+        JsonFieldRef * fields = (JsonFieldRef *)malloc(n * sizeof(JsonFieldRef));
+        for (UInt i = 1; i <= n; ++i) {
+            Obj nm = NAME_RNAM(-GET_RNAM_PREC(rec, i));
+            fields[i - 1].name = CONST_CHARS_STRING(nm);
+            fields[i - 1].len = GET_LEN_STRING(nm);
+            fields[i - 1].pos = i;
+        }
+        // No GAP allocation happens during the sort, so the cached name
+        // pointers stay valid here.
+        qsort(fields, n, sizeof(JsonFieldRef), jsonFieldRefCmp);
+        for (UInt k = 0; k < n; ++k) {
+            if (k != 0)
+                jbuf_putc(b, ',');
+            // Re-fetch the name Obj fresh: emitting the previous field may have
+            // grown the buffer (GC), invalidating cached name pointers.
+            jbuf_json_string(b, NAME_RNAM(-GET_RNAM_PREC(rec, fields[k].pos)));
+            jbuf_putlit(b, " : ", 3);
+            serialiseJson(b, GET_ELM_PREC(rec, fields[k].pos));
+        }
+        free(fields);
+    }
+    jbuf_putc(b, '}');
+}
+
+static void serialiseJson(JBuf * b, Obj obj)
+{
+    if (IS_INTOBJ(obj)) {
+        char tmp[32];
+        int  m = snprintf(tmp, sizeof(tmp), "%ld", (long)INT_INTOBJ(obj));
+        jbuf_putlit(b, tmp, m);
+        return;
+    }
+    if (obj == True)  { jbuf_putlit(b, "true", 4);  return; }
+    if (obj == False) { jbuf_putlit(b, "false", 5); return; }
+    if (obj == Fail)  { jbuf_putlit(b, "null", 4);  return; }
+
+    if (IS_STRING(obj)) {
+        Int len = LEN_LIST(obj);
+        if (len == 0) {
+            // Matches the GAP IsString method: "" for string rep, [] otherwise.
+            if (IS_STRING_REP(obj))
+                jbuf_putlit(b, "\"\"", 2);
+            else
+                jbuf_putlit(b, "[]", 2);
+            return;
+        }
+        if (!IS_STRING_REP(obj))
+            obj = CopyToStringRep(obj);   // allocates; obj is local, safe after
+        jbuf_json_string(b, obj);
+        return;
+    }
+
+    if (IS_LIST(obj)) {
+        RequireDenseList("GapToJsonString", obj);
+        Int len = LEN_LIST(obj);
+        jbuf_putc(b, '[');
+        for (Int i = 1; i <= len; ++i) {
+            if (i != 1)
+                jbuf_putc(b, ',');
+            serialiseJson(b, ELMW_LIST(obj, i));
+        }
+        jbuf_putc(b, ']');
+        return;
+    }
+
+    if (IS_PREC(obj)) {
+        serialiseJsonRecord(b, obj);
+        return;
+    }
+
+    // Fallback for everything else (floats, large integers, component objects,
+    // user-installed methods): let the GAP operation produce the JSON string,
+    // then copy it in. The call may GC, but we hold only the JBuf (bag handle
+    // + integer offsets), so there is nothing to re-derive.
+    {
+        Obj s = CALL_1ARGS(_JSON_ObjToString, obj);
+        Int slen = GET_LEN_STRING(s);
+        jbuf_ensure(b, slen);   // may move the bags; fetch both pointers after
+        memcpy(CHARS_STRING(b->str) + b->len, CONST_CSTR_STRING(s), slen);
+        b->len += slen;
+    }
+}
+
+static Obj FuncGAP_OBJ_TO_JSON_STRING(Obj self, Obj obj)
+{
+    JBuf b;
+    b.str = NEW_STRING(256);
+    b.len = 0;
+    b.cap = 256;
+
+    serialiseJson(&b, obj);
+
+    SET_LEN_STRING(b.str, b.len);
+    SHRINK_STRING(b.str);
+    return b.str;
 }
 
 // WARNING: This class is only complete enough to work with
@@ -464,7 +707,8 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_1ARGS(JSON_ESCAPE_STRING, string),
     GVAR_FUNC_1ARGS(JSON_STREAM_TO_GAP, string),
     GVAR_FUNC_3ARGS(GAP_LIST_TO_JSON_STRING, string, stream, list),
-    
+    GVAR_FUNC_1ARGS(GAP_OBJ_TO_JSON_STRING, obj),
+
 	{ 0 } /* Finish with an empty entry */
 
 };
@@ -478,6 +722,7 @@ static Int InitKernel( StructInitInfo *module )
     InitHdlrFuncsFromTable( GVarFuncs );
 
     ImportGVarFromLibrary("_GapToJsonStreamInternal", &_GapToJsonStreamInternal);
+    ImportGVarFromLibrary("_JSON_ObjToString", &_JSON_ObjToString);
 
     /* return success                                                      */
     return 0;
