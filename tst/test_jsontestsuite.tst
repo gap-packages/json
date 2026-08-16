@@ -16,5 +16,8 @@ gap> Length(_JSON_TS_Files()[2]);
 # the active implementation accepts and rejects what we expect it to
 gap> _JSON_TS_CheckConformance();
 
+# and every implementation agrees with every other one
+gap> _JSON_TS_CheckAgreement();
+
 #
 gap> STOP_TEST("json package: test_jsontestsuite.tst");

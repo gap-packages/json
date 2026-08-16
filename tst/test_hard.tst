@@ -31,3 +31,9 @@ gap> List(GapToJsonString(List([255], CHAR_INT)), IntChar);
 gap> validUtf8 := [[194,128], [223,191], [224,160,128], [237,159,191], [238,128,128], [239,191,191], [240,144,128,128], [244,143,191,191]];;
 gap> ForAll(validUtf8, bytes -> List(GapToJsonString(List(bytes, CHAR_INT)), IntChar) = Concatenation([34], bytes, [34]));
 true
+
+# The pure GAP and kernel string escapers must implement the same byte policy.
+gap> not _JSON_KERNEL_AVAILABLE or ForAll([0..255], b -> _JSON_PureEscapeString([CHAR_INT(b)]) = JSON_ESCAPE_STRING([CHAR_INT(b)]));
+true
+gap> not _JSON_KERNEL_AVAILABLE or _JSON_PureEscapeString(s) = JSON_ESCAPE_STRING(s);
+true

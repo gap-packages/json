@@ -42,3 +42,8 @@ DeclareGlobalFunction("JsonStringToGap");
 #! @Description
 #! Reads a single JSON object from a <A>stream</A> and converts it to a GAP value.
 DeclareGlobalFunction("JsonStreamToGap");
+
+
+# The selected backend. gap/impl.gi fills this record after all implementation
+# functions have been read.
+_JSON_BACKEND := rec();

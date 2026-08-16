@@ -75,16 +75,6 @@ Dependencies := rec(
   ExternalConditions := [ ],
 ),
 
-AvailabilityTest := function()
-   if IsKernelExtensionAvailable("json") = false then
-     LogPackageLoadingMessage( PACKAGE_WARNING,
-             [ "kernel functions for json are not available." ] );
-     return false;
-   else
-     return true;
-   fi;
-end,
-
 TestFile := "tst/testall.g",
 
 #Keywords := [ "TODO" ],
