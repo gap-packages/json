@@ -1,0 +1,134 @@
+#############################################################################
+##
+##  jsontestsuite.g              json Package
+##
+##  Support code for tst/test_jsontestsuite.tst, which runs the corpus in
+##  tst/JSONTestSuite through the package.
+##
+##  Upstream names a file y_* if it must be accepted, n_* if it must be
+##  rejected and i_* if either is allowed. We accept every y_ file and reject
+##  every n_ file bar the eleven listed below, all of them number formats that
+##  picojson is more relaxed about than RFC 8259.
+##
+
+BindGlobal( "_JSON_TS_DIR", "JSONTestSuite" );
+
+# n_ files we accept anyway
+BindGlobal( "_JSON_TS_LENIENT", MakeImmutable( [
+  "n_multidigit_number_then_00.json",              # 123\0\0
+  "n_number_-01.json",                             # leading zero
+  "n_number_-2..json",                             # no fractional digits
+  "n_number_0.e1.json",
+  "n_number_2.e+3.json",
+  "n_number_2.e-3.json",
+  "n_number_2.e3.json",
+  "n_number_neg_int_starting_with_zero.json",
+  "n_number_neg_real_without_int_part.json",       # -.123
+  "n_number_real_without_fractional_part.json",    # 1.
+  "n_number_with_leading_zero.json",
+] ) );
+
+# i_ files we accept; the remaining i_ files must be rejected. Broadly, we
+# pass malformed UTF-8 through untouched but insist on well formed \u
+# surrogate pairs.
+BindGlobal( "_JSON_TS_ACCEPTED", MakeImmutable( [
+  "i_number_double_huge_neg_exp.json",
+  "i_number_huge_exp.json",
+  "i_number_neg_int_huge_exp.json",
+  "i_number_pos_double_huge_exp.json",
+  "i_number_real_neg_overflow.json",
+  "i_number_real_pos_overflow.json",
+  "i_number_real_underflow.json",
+  "i_number_too_big_neg_int.json",
+  "i_number_too_big_pos_int.json",
+  "i_number_very_big_negative_int.json",
+  "i_string_UTF-8_invalid_sequence.json",
+  "i_string_UTF8_surrogate_U+D800.json",
+  "i_string_invalid_utf-8.json",
+  "i_string_iso_latin_1.json",
+  "i_string_lone_utf8_continuation_byte.json",
+  "i_string_not_in_unicode_range.json",
+  "i_string_overlong_sequence_2_bytes.json",
+  "i_string_overlong_sequence_6_bytes.json",
+  "i_string_overlong_sequence_6_bytes_null.json",
+  "i_string_truncated-utf-8.json",
+  "i_structure_500_nested_arrays.json",
+] ) );
+
+#############################################################################
+##
+#F  _JSON_TS_Files( )
+##
+##  The corpus, sorted so that the tests run in a reproducible order.
+##
+BindGlobal( "_JSON_TS_Files", function()
+  local dir, files;
+  dir := Filename(DirectoriesPackageLibrary("json", "tst"), _JSON_TS_DIR);
+  files := Filtered(DirectoryContents(dir),
+             f -> 5 < Length(f) and f{[ Length(f)-4 .. Length(f) ]} = ".json");
+  return [ dir, SortedList(files) ];
+end );
+
+
+#############################################################################
+##
+#F  _JSON_TS_Parse( <dir>, <file> )
+##
+##  Parses one corpus file and reports whether it was accepted.
+##
+BindGlobal( "_JSON_TS_Parse", function(dir, file)
+  local readOnlyOutput, savedBreakOnError, savedOutput, sink, res;
+  # most of the corpus is meant to be rejected, so send the error messages to
+  # a sink rather than into the test output
+  readOnlyOutput := IsReadOnlyGlobal("ERROR_OUTPUT");
+  if readOnlyOutput then
+    MakeReadWriteGlobal("ERROR_OUTPUT");
+  fi;
+  savedBreakOnError := BreakOnError;
+  savedOutput := ERROR_OUTPUT;
+  sink := OutputTextString("", false);
+  BreakOnError := false;
+  ERROR_OUTPUT := sink;
+  res := CALL_WITH_CATCH(JsonStringToGap,
+                         [ StringFile(Filename(Directory(dir), file)) ]);
+  ERROR_OUTPUT := savedOutput;
+  BreakOnError := savedBreakOnError;
+  if readOnlyOutput then
+    MakeReadOnlyGlobal("ERROR_OUTPUT");
+  fi;
+  CloseStream(sink);
+  return res[1];
+end );
+
+
+#############################################################################
+##
+#F  _JSON_TS_CheckConformance( )
+##
+##  Checks the implementation currently in use against the expectations above,
+##  and prints a line for every disagreement.
+##
+BindGlobal( "_JSON_TS_CheckConformance", function()
+  local data, dir, file, accepted, expected;
+
+  data := _JSON_TS_Files();
+  dir := data[1];
+
+  for file in data[2] do
+    accepted := _JSON_TS_Parse(dir, file);
+    if file[1] = 'y' then
+      expected := true;
+    elif file[1] = 'n' then
+      expected := file in _JSON_TS_LENIENT;
+    else
+      expected := file in _JSON_TS_ACCEPTED;
+    fi;
+    if accepted <> expected then
+      if accepted then
+        Print("unexpectedly accepted: ", file, "\n");
+      else
+        Print("unexpectedly rejected: ", file, "\n");
+      fi;
+    fi;
+  od;
+end );
