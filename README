@@ -19,16 +19,25 @@ types, look at the openmath package, or IO_Pickle in the IO package.
 Updates
 =======
 
-unreleased
+v2.5.0
 ======
 
-Fix a buffer over-read when escaping a string whose last character is a
-truncated multi-byte UTF-8 sequence, such as [ CHAR_INT(200) ]. Reading past
-the end of the string now yields 0 rather than whatever happened to follow it,
-so the sequence falls back to Latin-1 like any other malformed one instead of
-raising an error or reading out of bounds.
+- Speed up GapToJsonString by serialising common GAP objects directly in the
+  kernel.
 
-v2.3.0
+- Fix a buffer over-read when escaping a string whose last character is a
+  truncated multi-byte UTF-8 sequence, such as [ CHAR_INT(200) ]. Reading past
+  the end of the string now yields 0 rather than whatever happened to follow
+  it, so the sequence falls back to Latin-1 like any other malformed one
+  instead of raising an error or reading out of bounds.
+
+- Avoid format-string vulnerabilities when reporting invalid JSON.
+
+- Remove the unnecessary run-time dependency on GAPDoc.
+
+- Require GAP 4.15 or later.
+
+v2.4.0
 ======
 
 Allow outputting 'fail', it maps to null (null was already read in as fail)
