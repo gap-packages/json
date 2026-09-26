@@ -17,3 +17,17 @@ gap> List(GapToJsonString([ CHAR_INT(226), CHAR_INT(130) ]), IntChar);
 [ 34, 195, 162, 194, 130, 34 ]
 gap> ForAll([0..255], b -> IsString(GapToJsonString([ CHAR_INT(b) ])));
 true
+
+# Invalid UTF-8 bytes are interpreted individually as Latin-1 rather than
+# being mistaken for overlong, surrogate, or out-of-range encodings.
+gap> List(GapToJsonString(List([192,175], CHAR_INT)), IntChar);
+[ 34, 195, 128, 194, 175, 34 ]
+gap> List(GapToJsonString(List([237,160,128], CHAR_INT)), IntChar);
+[ 34, 195, 173, 194, 160, 194, 128, 34 ]
+gap> List(GapToJsonString(List([244,144,128,128], CHAR_INT)), IntChar);
+[ 34, 195, 180, 194, 144, 194, 128, 194, 128, 34 ]
+gap> List(GapToJsonString(List([255], CHAR_INT)), IntChar);
+[ 34, 195, 191, 34 ]
+gap> validUtf8 := [[194,128], [223,191], [224,160,128], [237,159,191], [238,128,128], [239,191,191], [240,144,128,128], [244,143,191,191]];;
+gap> ForAll(validUtf8, bytes -> List(GapToJsonString(List(bytes, CHAR_INT)), IntChar) = Concatenation([34], bytes, [34]));
+true

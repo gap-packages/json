@@ -16,7 +16,7 @@ gap> test_stream("{}{}",[rec(), rec()]);
 gap> test_stream("\"abc\"\"def\"", ["abc", "def"]);
 gap> test_stream("\"abc\" \"def\"", ["abc", "def"]);
 gap> test_stream("1", [1,1]);
-Error, syntax error at line 1 near: 
+Error, Invalid JSON syntax at line 1
 gap> test_stream("\"\"", [""]);
 gap> test_stream("\"\"", ["",1]);
-Error, syntax error at line 1 near: 
+Error, Invalid JSON syntax at line 1

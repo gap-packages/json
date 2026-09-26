@@ -62,17 +62,6 @@ Obj JsonToGap(const gmp_value& v)
 // Add function prototype missing from string.h
 extern Obj CopyToStringRep(Obj string);
 
-static Int numberOfBytes(UInt c)
-{
-    if (c < 128)
-        return 1;
-    if (c < 224)
-        return 2;
-    if (c < 240)
-        return 3;
-    return 4;
-}
-
 // Reading past the end of <list> yields 0, which is not a continuation byte,
 // so a truncated multi-byte sequence at the end of the string falls back to
 // Latin-1 like any other malformed one.
@@ -92,7 +81,8 @@ static Int getUTF8Char(Obj list, Int len, Int * basepos)
     Int  pos = *basepos;
     UInt val = getChar(list, len, pos);
     UInt singlebyte_val = val;
-    Int  nbytes = numberOfBytes(val);
+    UInt first = val;
+    Int  nbytes = picojson::utf8_sequence_length(val);
     pos++;
 
     if (nbytes == 1) {
@@ -100,42 +90,17 @@ static Int getUTF8Char(Obj list, Int len, Int * basepos)
         return val;
     }
 
-    switch (nbytes) {
-    case 2:
-        val = val & 0x3F;
-        if (val & 0x20)
-            goto invalid;
-        break;
-    case 3:
-        val = val & 0x1F;
-        if (val & 0x10)
-            goto invalid;
-        break;
-    case 4:
-        val = val & 0x0F;
-        if (val & 0x08)
-            goto invalid;
-        break;
-    default:
-        abort();
-    }
-    val = val & 0x3F;
+    if (nbytes == 0)
+        goto invalid;
 
+    val &= (1 << (7 - nbytes)) - 1;
     for (Int i = 1; i < nbytes; ++i) {
         UInt c = getChar(list, len, pos);
-        if ((c & 0xC0) != 0x80)
+        if (!picojson::valid_utf8_continuation(first, i, c))
             goto invalid;
         val = (val << 6) | (c & 0x3F);
         pos++;
     }
-
-    // Too high
-    if (val > 0x10ffff)
-        goto invalid;
-
-    // UTF-16 Surrogate pair
-    if (val >= 0xd800 && val <= 0xdfff)
-        goto invalid;
 
     *basepos = pos;
     return val;
@@ -526,44 +491,40 @@ struct GapStreamToInputIterator
   : stream(gstii.stream), state(gstii.state), store(gstii.store)
   { } 
 
-  char operator*()
+  void fill()
   {
-    if(state == cached)
-      return store;
-    
-    if(state == failed)
-      return 0;
+    if (state != notread)
+      return;
 
     Obj val = callGAPFunction(ReadByteFunction, stream);
-    if(val == Fail)
-    {
+    if (val == Fail) {
       state = failed;
-      return 0;
-    }
-    else
-    {
+    } else {
       state = cached;
       store = INT_INTOBJ(val);
-      return store;
     }
   }
-  
+
+  char operator*()
+  {
+    fill();
+    GAP_ASSERT(state == cached);
+    return store;
+  }
+
   void operator++()
   {
-    if(state == failed)
-      return;
-    
-    // skip character
-    if(state == notread)
-    {
-      *(*this);
-    }
-    
-    state = notread;
+    fill();
+    if (state == cached)
+      state = notread;
   }
-  
+
   friend bool operator==(GapStreamToInputIterator& lhs, GapStreamToInputIterator& rhs)
-  { return (lhs.state == failed) == (rhs.state == failed); }
+  {
+    lhs.fill();
+    rhs.fill();
+    return (lhs.state == failed) == (rhs.state == failed);
+  }
   
 };
 
@@ -683,7 +644,7 @@ static Obj FuncJSON_STRING_TO_GAP(Obj self, Obj param)
 
     // Check end of string
     const char * ptr = CSTR_STRING(real_string);
-    const char * ptrend = ptr + strlen(ptr);
+    const char * ptrend = ptr + GET_LEN_STRING(real_string);
 
     // Extra position in the string
     const char * res = ptr + endparse.pos;
@@ -694,11 +655,13 @@ static Obj FuncJSON_STRING_TO_GAP(Obj self, Obj param)
       res--;
     }
 
-    for(; res != ptrend; res++)
+    GAP_ASSERT(res <= ptrend);
+    for(; res < ptrend; res++)
     {
-      if(!(isspace(*res)) && *res)
+      if (!isspace((unsigned char)*res))
       {
-        ErrorMayQuit("Failed to parse end of string: '%s'",(Int)res,0);
+        ErrorMayQuit("Unexpected non-whitespace after JSON value at byte %d",
+                     res - ptr + 1, 0);
         return Fail;
       }
     }
