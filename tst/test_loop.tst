@@ -79,3 +79,33 @@ gap> r.("a b c") := 2;;
 gap> test_cycle(r);
 gap> r.("a \"love\" cats") := 3;;
 gap> test_cycle(r);
+
+# JSON number syntax, rather than merely accepting GAP float syntax.
+gap> List(["0", "-0", "0.0", "1e0", "1E+2", "-12.5e-3"], _JSON_IsValidNumberString);
+[ true, true, true, true, true, true ]
+gap> List(["", "-", "+1", "01", "1.", ".1", "1e", "nan", "inf"], _JSON_IsValidNumberString);
+[ false, false, false, false, false, false, false, false, false ]
+gap> GapToJsonString([0.0, -0.0, 1.0, -1.0, 1.5, 1.0e20, 1.0e100]);
+"[0.0,-0.0,1.0,-1.0,1.5,1.0e+20,1.0e+100]"
+gap> nonfinite := [Float("nan"), Float("inf"), Float("-inf")];;
+gap> GapToJsonString(nonfinite);
+"[NaN,Infinity,-Infinity]"
+gap> streamed := "";; stream := OutputTextString(streamed, true);;
+gap> GapToJsonStream(stream, nonfinite);; CloseStream(stream);; streamed;
+"[NaN,Infinity,-Infinity]"
+gap> test_nonfinite := function(str, predicate)
+> local fromString, fromStream, stream;
+> fromString := JsonStringToGap(str);
+> stream := InputTextString(str);
+> fromStream := JsonStreamToGap(stream);
+> CloseStream(stream);
+> return predicate(fromString) and predicate(fromStream);
+> end;;
+gap> List(["NaN", "nan"], str -> test_nonfinite(str, IsNaN));
+[ true, true ]
+gap> List(["Infinity", "inf"], str -> test_nonfinite(str, x -> x = Float("inf")));
+[ true, true ]
+gap> List(["-Infinity", "-inf"], str -> test_nonfinite(str, x -> x = Float("-inf")));
+[ true, true ]
+gap> IsNaN(JsonStringToGap(GapToJsonString(Float("nan"))));
+true

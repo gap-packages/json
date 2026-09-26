@@ -880,20 +880,42 @@ namespace picojson {
     return num_str;
   }
   
+  template <typename Context> inline bool _set_number(Context& ctx, const std::string& num_str) {
+#ifdef PICOJSON_USE_INT64
+    {
+      errno = 0;
+      char *endp;
+      intmax_t ival = strtoimax(num_str.c_str(), &endp, 10);
+      if (errno == 0
+          && std::numeric_limits<int64_t>::min() <= ival
+          && ival <= std::numeric_limits<int64_t>::max()
+          && endp == num_str.c_str() + num_str.size()) {
+        ctx.set_int64(ival);
+        return true;
+      }
+    }
+#endif
+    return ctx.set_number(num_str);
+  }
+
   template <typename Context, typename Iter> inline bool _parse(Context& ctx, input<Iter>& in, size_t depth = 0) {
     in.skip_ws();
     int ch = in.getc();
     switch (ch) {
-#define IS(ch, text, op) case ch: \
-      if (in.match(text) && op) { \
-        return true; \
-      } else { \
-        return false; \
-      }
-      IS('n', "ull", ctx.set_null());
-      IS('f', "alse", ctx.set_bool(false));
-      IS('t', "rue", ctx.set_bool(true));
-#undef IS
+    case 'n':
+      if (in.match("ull")) return ctx.set_null();
+      if (in.match("an")) return _set_number(ctx, "nan");
+      return false;
+    case 'N':
+      return in.match("aN") && _set_number(ctx, "NaN");
+    case 'i':
+      return in.match("nf") && _set_number(ctx, "inf");
+    case 'I':
+      return in.match("nfinity") && _set_number(ctx, "Infinity");
+    case 'f':
+      return in.match("alse") && ctx.set_bool(false);
+    case 't':
+      return in.match("rue") && ctx.set_bool(true);
     case '"':
       return ctx.parse_string(in);
     case '[':
@@ -908,28 +930,17 @@ namespace picojson {
         return false;
       }
       return _parse_object(ctx, in, depth + 1);
+    case '-': {
+      if (in.match("Infinity")) return _set_number(ctx, "-Infinity");
+      if (in.match("inf")) return _set_number(ctx, "-inf");
+      std::string num_str("-");
+      num_str += _parse_number(in);
+      return _set_number(ctx, num_str);
+    }
     default:
-      if (('0' <= ch && ch <= '9') || ch == '-') {
+      if ('0' <= ch && ch <= '9') {
         in.ungetc();
-        std::string num_str = _parse_number(in);
-        if (num_str.empty()) {
-          return false;
-        }
-#ifdef PICOJSON_USE_INT64
-        {
-          errno = 0;
-          char *endp;
-          intmax_t ival = strtoimax(num_str.c_str(), &endp, 10);
-          if (errno == 0
-              && std::numeric_limits<int64_t>::min() <= ival
-              && ival <= std::numeric_limits<int64_t>::max()
-              && endp == num_str.c_str() + num_str.size()) {
-            ctx.set_int64(ival);
-            return true;
-          }
-        }
-#endif
-        return ctx.set_number(num_str);
+        return _set_number(ctx, _parse_number(in));
       }
       break;
     }
