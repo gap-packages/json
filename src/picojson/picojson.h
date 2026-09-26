@@ -106,6 +106,26 @@ namespace picojson {
     INDENT_WIDTH = 2
   };
 
+  static const size_t max_nesting_depth = 1024;
+
+  inline int utf8_sequence_length(int first) {
+    if (first < 0x80) return 1;
+    if (0xc2 <= first && first <= 0xdf) return 2;
+    if (0xe0 <= first && first <= 0xef) return 3;
+    if (0xf0 <= first && first <= 0xf4) return 4;
+    return 0;
+  }
+
+  inline bool valid_utf8_continuation(int first, int index, int byte) {
+    if (byte < 0x80 || 0xbf < byte) return false;
+    if (index != 1) return true;
+    if (first == 0xe0) return 0xa0 <= byte;
+    if (first == 0xed) return byte <= 0x9f;
+    if (first == 0xf0) return 0x90 <= byte;
+    if (first == 0xf4) return byte <= 0x8f;
+    return true;
+  }
+
   struct null {};
   
   namespace defaults {
@@ -624,6 +644,7 @@ namespace picojson {
     int last_ch_;
     bool ungot_;
     int line_;
+    std::string error_;
   public:
     bool check_ungot() const
     { return ungot_; }
@@ -653,6 +674,10 @@ namespace picojson {
     }
     Iter cur() const { return cur_; }
     int line() const { return line_; }
+    const std::string& error() const { return error_; }
+    void set_error(const std::string& error) {
+      if (error_.empty()) error_ = error;
+    }
     void skip_ws() {
       while (1) {
         int ch = getc();
@@ -777,13 +802,26 @@ namespace picojson {
           return false;
         }
       } else {
+        int length = utf8_sequence_length(ch);
+        if (length == 0) {
+          in.set_error("invalid UTF-8 in JSON string");
+          return false;
+        }
         out.push_back(ch);
+        for (int i = 1; i < length; ++i) {
+          int continuation = in.getc();
+          if (! valid_utf8_continuation(ch, i, continuation)) {
+            in.set_error("invalid UTF-8 in JSON string");
+            return false;
+          }
+          out.push_back(continuation);
+        }
       }
     }
     return false;
   }
   
-  template <typename Context, typename Iter> inline bool _parse_array(Context& ctx, input<Iter>& in) {
+  template <typename Context, typename Iter> inline bool _parse_array(Context& ctx, input<Iter>& in, size_t depth) {
     if (! ctx.parse_array_start()) {
       return false;
     }
@@ -792,7 +830,7 @@ namespace picojson {
       return ctx.parse_array_stop(idx);
     }
     do {
-      if (! ctx.parse_array_item(in, idx)) {
+      if (! ctx.parse_array_item(in, idx, depth)) {
         return false;
       }
       idx++;
@@ -800,7 +838,7 @@ namespace picojson {
     return in.expect(']') && ctx.parse_array_stop(idx);
   }
   
-  template <typename Context, typename Iter> inline bool _parse_object(Context& ctx, input<Iter>& in) {
+  template <typename Context, typename Iter> inline bool _parse_object(Context& ctx, input<Iter>& in, size_t depth) {
     if (! ctx.parse_object_start()) {
       return false;
     }
@@ -814,7 +852,7 @@ namespace picojson {
           || ! in.expect(':')) {
         return false;
       }
-      if (! ctx.parse_object_item(in, key)) {
+      if (! ctx.parse_object_item(in, key, depth)) {
         return false;
       }
     } while (in.expect(','));
@@ -842,7 +880,7 @@ namespace picojson {
     return num_str;
   }
   
-  template <typename Context, typename Iter> inline bool _parse(Context& ctx, input<Iter>& in) {
+  template <typename Context, typename Iter> inline bool _parse(Context& ctx, input<Iter>& in, size_t depth = 0) {
     in.skip_ws();
     int ch = in.getc();
     switch (ch) {
@@ -859,9 +897,17 @@ namespace picojson {
     case '"':
       return ctx.parse_string(in);
     case '[':
-      return _parse_array(ctx, in);
+      if (depth == max_nesting_depth) {
+        in.set_error("JSON input nested more than 1024 levels deep");
+        return false;
+      }
+      return _parse_array(ctx, in, depth + 1);
     case '{':
-      return _parse_object(ctx, in);
+      if (depth == max_nesting_depth) {
+        in.set_error("JSON input nested more than 1024 levels deep");
+        return false;
+      }
+      return _parse_object(ctx, in, depth + 1);
     default:
       if (('0' <= ch && ch <= '9') || ch == '-') {
         in.ungetc();
@@ -901,12 +947,12 @@ namespace picojson {
     bool set_number(const std::string&) { return false; }
     template <typename Iter> bool parse_string(input<Iter>&) { return false; }
     bool parse_array_start() { return false; }
-    template <typename Iter> bool parse_array_item(input<Iter>&, size_t) {
+    template <typename Iter> bool parse_array_item(input<Iter>&, size_t, size_t depth) {
       return false;
     }
     bool parse_array_stop(size_t) { return false; }
     bool parse_object_start() { return false; }
-    template <typename Iter> bool parse_object_item(input<Iter>&, const std::string&) {
+    template <typename Iter> bool parse_object_item(input<Iter>&, const std::string&, size_t depth) {
       return false;
     }
   };
@@ -946,21 +992,21 @@ namespace picojson {
       *out_ = value_t<TraitsT>(array_type, false);
       return true;
     }
-    template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
+    template <typename Iter> bool parse_array_item(input<Iter>& in, size_t, size_t depth) {
       typename value_t<TraitsT>::array& a = out_->template get<typename value_t<TraitsT>::array>();
       a.push_back(value_t<TraitsT>());
       default_parse_context_t ctx(&a.back());
-      return _parse(ctx, in);
+      return _parse(ctx, in, depth);
     }
     bool parse_array_stop(size_t) { return true; }
     bool parse_object_start() {
       *out_ = value_t<TraitsT>(object_type, false);
       return true;
     }
-    template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key) {
+    template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key, size_t depth) {
       typename value_t<TraitsT>::object& o = out_->template get<typename value_t<TraitsT>::object>();
       default_parse_context_t ctx(&o[key]);
-      return _parse(ctx, in);
+      return _parse(ctx, in, depth);
     }
   private:
     default_parse_context_t(const default_parse_context_t&);
@@ -986,13 +1032,13 @@ namespace picojson {
       return _parse_string(s, in);
     }
     bool parse_array_start() { return true; }
-    template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
-      return _parse(*this, in);
+    template <typename Iter> bool parse_array_item(input<Iter>& in, size_t, size_t depth) {
+      return _parse(*this, in, depth);
     }
     bool parse_array_stop(size_t) { return true; }
     bool parse_object_start() { return true; }
-    template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string&) {
-      return _parse(*this, in);
+    template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string&, size_t depth) {
+      return _parse(*this, in, depth);
     }
   private:
     null_parse_context(const null_parse_context&);
@@ -1010,16 +1056,12 @@ namespace picojson {
   template <typename Context, typename Iter> inline Iter _parse(Context& ctx, const Iter& first, const Iter& last, std::string* err, bool* ungotc_check) {
     input<Iter> in(first, last);
     if (! _parse(ctx, in) && err != NULL) {
-      char buf[64];
-      SNPRINTF(buf, sizeof(buf), "syntax error at line %d near: ", in.line());
-      *err = buf;
-      while (1) {
-        int ch = in.getc();
-        if (ch == -1 || ch == '\n') {
-          break;
-        } else if (ch >= ' ') {
-          err->push_back(ch);
-        }
+      if (! in.error().empty()) {
+        *err = in.error();
+      } else {
+        char buf[64];
+        SNPRINTF(buf, sizeof(buf), "Invalid JSON syntax at line %d", in.line());
+        *err = buf;
       }
     }
 
