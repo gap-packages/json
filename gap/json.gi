@@ -42,57 +42,12 @@ function(o, d)
   WriteAll(o, STRING_INT(d));
 end );
 
-_JSON_IsValidNumberString := function(s)
-  local i, len, isDigit;
-  i := 1;
-  len := Length(s);
-  isDigit := c -> '0' <= c and c <= '9';
-
-  if i <= len and s[i] = '-' then
-    i := i + 1;
-  fi;
-  if i > len then
-    return false;
-  elif s[i] = '0' then
-    i := i + 1;
-  elif '1' <= s[i] and s[i] <= '9' then
-    repeat
-      i := i + 1;
-    until i > len or not isDigit(s[i]);
-  else
-    return false;
-  fi;
-
-  if i <= len and s[i] = '.' then
-    i := i + 1;
-    if i > len or not isDigit(s[i]) then
-      return false;
-    fi;
-    repeat
-      i := i + 1;
-    until i > len or not isDigit(s[i]);
-  fi;
-
-  if i <= len and s[i] in "eE" then
-    i := i + 1;
-    if i <= len and s[i] in "+-" then
-      i := i + 1;
-    fi;
-    if i > len or not isDigit(s[i]) then
-      return false;
-    fi;
-    repeat
-      i := i + 1;
-    until i > len or not isDigit(s[i]);
-  fi;
-
-  return i > len;
-end;
-
 InstallMethod(_GapToJsonStreamInternal, [IsOutputStream, IsFloat],
 function(o, d)
   local dot, s;
-  if IsNaN(d) then
+  if not IsRealFloat(d) then
+    ErrorNoReturn("cannot encode non-real float as JSON");
+  elif IsNaN(d) then
     WriteAll(o, "NaN");
     return;
   elif not IsFinite(d) then
@@ -112,9 +67,6 @@ function(o, d)
     s := Concatenation(s{[1..dot]}, "0", s{[dot + 1..Length(s)]});
   fi;
 
-  if not _JSON_IsValidNumberString(s) then
-    ErrorNoReturn("cannot encode float as JSON: ", s);
-  fi;
   WriteAll(o, s);
 end );
 

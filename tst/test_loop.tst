@@ -80,10 +80,37 @@ gap> test_cycle(r);
 gap> r.("a \"love\" cats") := 3;;
 gap> test_cycle(r);
 
+# The grammar checker belongs in the tests, not on the serialisation path.
+gap> _JSON_TEST_IsValidNumberString := function(s)
+> local i, len, isDigit;
+> i := 1;
+> len := Length(s);
+> isDigit := c -> '0' <= c and c <= '9';
+> if i <= len and s[i] = '-' then i := i + 1; fi;
+> if i > len then return false;
+> elif s[i] = '0' then i := i + 1;
+> elif '1' <= s[i] and s[i] <= '9' then
+>   repeat i := i + 1; until i > len or not isDigit(s[i]);
+> else return false;
+> fi;
+> if i <= len and s[i] = '.' then
+>   i := i + 1;
+>   if i > len or not isDigit(s[i]) then return false; fi;
+>   repeat i := i + 1; until i > len or not isDigit(s[i]);
+> fi;
+> if i <= len and s[i] in "eE" then
+>   i := i + 1;
+>   if i <= len and s[i] in "+-" then i := i + 1; fi;
+>   if i > len or not isDigit(s[i]) then return false; fi;
+>   repeat i := i + 1; until i > len or not isDigit(s[i]);
+> fi;
+> return i > len;
+> end;;
+
 # JSON number syntax, rather than merely accepting GAP float syntax.
-gap> List(["0", "-0", "0.0", "1e0", "1E+2", "-12.5e-3"], _JSON_IsValidNumberString);
+gap> List(["0", "-0", "0.0", "1e0", "1E+2", "-12.5e-3"], _JSON_TEST_IsValidNumberString);
 [ true, true, true, true, true, true ]
-gap> List(["", "-", "+1", "01", "1.", ".1", "1e", "nan", "inf"], _JSON_IsValidNumberString);
+gap> List(["", "-", "+1", "01", "1.", ".1", "1e", "nan", "inf"], _JSON_TEST_IsValidNumberString);
 [ false, false, false, false, false, false, false, false, false ]
 gap> GapToJsonString([0.0, -0.0, 1.0, -1.0, 1.5, 1.0e20, 1.0e100]);
 "[0.0,-0.0,1.0,-1.0,1.5,1.0e+20,1.0e+100]"
