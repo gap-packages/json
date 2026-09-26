@@ -7,15 +7,17 @@
 ##
 ##  Upstream names a file y_* if it must be accepted, n_* if it must be
 ##  rejected and i_* if either is allowed. We accept every y_ file and reject
-##  every n_ file bar the eleven listed below, all of them number formats that
-##  picojson is more relaxed about than RFC 8259.
+##  every n_ file bar thirteen listed below: ten deliberately generous number
+##  formats and the three Python-compatible non-finite extensions.
 ##
 
 BindGlobal( "_JSON_TS_DIR", "JSONTestSuite" );
 
 # n_ files we accept anyway
 BindGlobal( "_JSON_TS_LENIENT", MakeImmutable( [
-  "n_multidigit_number_then_00.json",              # 123\0\0
+  "n_number_NaN.json",
+  "n_number_infinity.json",
+  "n_number_minus_infinity.json",
   "n_number_-01.json",                             # leading zero
   "n_number_-2..json",                             # no fractional digits
   "n_number_0.e1.json",
@@ -28,9 +30,8 @@ BindGlobal( "_JSON_TS_LENIENT", MakeImmutable( [
   "n_number_with_leading_zero.json",
 ] ) );
 
-# i_ files we accept; the remaining i_ files must be rejected. Broadly, we
-# pass malformed UTF-8 through untouched but insist on well formed \u
-# surrogate pairs.
+# i_ files we accept; the remaining i_ files must be rejected. These exercise
+# implementation-dependent numeric limits and a 500-level nested structure.
 BindGlobal( "_JSON_TS_ACCEPTED", MakeImmutable( [
   "i_number_double_huge_neg_exp.json",
   "i_number_huge_exp.json",
@@ -42,16 +43,6 @@ BindGlobal( "_JSON_TS_ACCEPTED", MakeImmutable( [
   "i_number_too_big_neg_int.json",
   "i_number_too_big_pos_int.json",
   "i_number_very_big_negative_int.json",
-  "i_string_UTF-8_invalid_sequence.json",
-  "i_string_UTF8_surrogate_U+D800.json",
-  "i_string_invalid_utf-8.json",
-  "i_string_iso_latin_1.json",
-  "i_string_lone_utf8_continuation_byte.json",
-  "i_string_not_in_unicode_range.json",
-  "i_string_overlong_sequence_2_bytes.json",
-  "i_string_overlong_sequence_6_bytes.json",
-  "i_string_overlong_sequence_6_bytes_null.json",
-  "i_string_truncated-utf-8.json",
   "i_structure_500_nested_arrays.json",
 ] ) );
 

@@ -9,6 +9,10 @@ gap> if not IsBound(_JSON_TS_CheckConformance) then
 >      Read(Filename(DirectoriesPackageLibrary("json", "tst"), "jsontestsuite.g"));
 >    fi;
 
+# the complete corpus is present
+gap> Length(_JSON_TS_Files()[2]);
+316
+
 # the active implementation accepts and rejects what we expect it to
 gap> _JSON_TS_CheckConformance();
 
