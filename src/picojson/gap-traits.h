@@ -66,6 +66,21 @@ struct gap_val
     
     static std::pair<gap_val*, bool> from_str(const std::string& s)
     {
+        if (s == "NaN" || s == "nan") {
+            return std::make_pair(
+                new gap_val(NEW_MACFLOAT(std::numeric_limits<double>::quiet_NaN())),
+                true);
+        }
+        if (s == "Infinity" || s == "inf") {
+            return std::make_pair(
+                new gap_val(NEW_MACFLOAT(std::numeric_limits<double>::infinity())),
+                true);
+        }
+        if (s == "-Infinity" || s == "-inf") {
+            return std::make_pair(
+                new gap_val(NEW_MACFLOAT(-std::numeric_limits<double>::infinity())),
+                true);
+        }
         if(s.find(".") != std::string::npos)
         {
             return from_str_double(s);

@@ -8,6 +8,8 @@
 #! * JSON strings are mapped to GAP strings
 #! * Integers are mapped to GAP integers, non-integer numbers are mapped to Floats
 #! * true, false and null are mapped to true, false and fail respectively
+#! * Non-finite GAP floats use the Python-compatible non-standard spellings NaN, Infinity and -Infinity.
+#! * The historical lowercase spellings nan, inf and -inf are accepted on input.
 #! 
 #! Note that this library is *NOT* intended to provide a general purpose library
 #! for transmitting any GAP object. If you wish to do this, look at
