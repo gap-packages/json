@@ -26,13 +26,18 @@ methods are shared by both paths, with the kernel accelerating common objects.
 Updates
 =======
 
-unreleased
+v2.6.0
 ==========
 
 - Make the kernel extension optional. Without it, the package falls back to a
   JSON parser and string escaper written in GAP.
 
 - Add the JSONTestSuite parsing corpus.
+
+- Add a catch for if nesting is too deep, rather than crash.
+
+- Correctly handle infinity and nan. These are handled in the same way
+  Python handles them (technically not valid JSON but a common extension).
 
 v2.5.0
 ======
